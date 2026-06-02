@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Duurzaam Huis · Interactief Ontwerp</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{width:100%;height:100%;overflow:hidden;background:#0e1511;font-family:'Helvetica Neue',system-ui,sans-serif;color:#eef3ee;}
+  #app{width:100vw;height:100vh;position:relative;}
+  /* topbar */
+  .topbar{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:14px;
+    padding:12px 18px;background:linear-gradient(180deg,rgba(8,16,10,0.85),rgba(8,16,10,0));pointer-events:none;}
+  .brand{display:flex;align-items:center;gap:9px;pointer-events:auto;}
+  .logo{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#5BD06A,#1F7A33);display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 10px rgba(60,180,80,.35);}
+  .ttl{font-size:18px;font-weight:700;letter-spacing:.2px;}
+  .sub{font-size:10px;color:rgba(255,255,255,.5);margin-top:1px;}
+  .tabs{margin-left:auto;display:flex;gap:6px;pointer-events:auto;}
+  .tabs button{font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.05);color:rgba(255,255,255,.72);padding:8px 14px;border-radius:9px;backdrop-filter:blur(10px);transition:.2s;}
+  .tabs button.active{background:linear-gradient(135deg,#4CC65C,#1F7A33);color:#fff;border-color:transparent;box-shadow:0 3px 14px rgba(60,180,80,.4);}
+  /* views */
+  .view{position:absolute;inset:0;}
+  .view.hidden{display:none;}
+  #c3d{width:100%;height:100%;display:block;}
+  .plan-wrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(1200px 700px at 50% 40%,#16201a,#0c130f);}
+  svg{max-width:92%;max-height:82%;}
+  .room{cursor:pointer;transition:.15s;}
+  .room:hover .rfill{filter:brightness(1.18);}
+  .rlabel{font-size:11px;fill:#0c130f;font-weight:700;pointer-events:none;font-family:inherit;}
+  .rarea{font-size:8.5px;fill:#1a3a22;pointer-events:none;font-family:inherit;}
+  .wall2d{fill:#243029;}
+  .hint{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);font-size:11px;color:rgba(255,255,255,.42);
+    background:rgba(0,0,0,.35);padding:6px 14px;border-radius:20px;z-index:15;}
+  /* info panel */
+  .panel{position:absolute;top:0;right:0;height:100%;width:330px;max-width:86vw;z-index:30;
+    background:rgba(13,22,16,.92);backdrop-filter:blur(20px);border-left:1px solid rgba(120,220,140,.18);
+    transform:translateX(105%);transition:transform .35s cubic-bezier(.4,0,.2,1);padding:64px 22px 22px;overflow-y:auto;}
+  .panel.open{transform:translateX(0);}
+  .panel .close{position:absolute;top:16px;right:18px;cursor:pointer;font-size:20px;color:rgba(255,255,255,.5);background:none;border:none;}
+  .pcat{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#5BD06A;}
+  .pname{font-size:24px;font-weight:800;margin:4px 0 16px;line-height:1.15;}
+  .prow{margin-bottom:14px;}
+  .plabel{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:3px;}
+  .pval{font-size:14px;color:#eef3ee;line-height:1.45;}
+  .pleaf{display:inline-block;margin-top:2px;padding:10px 12px;background:rgba(60,160,80,.14);border-left:3px solid #4CC65C;border-radius:6px;font-size:13px;line-height:1.5;color:#d6f0d8;}
+  .legend{position:absolute;left:16px;bottom:16px;z-index:15;background:rgba(13,22,16,.72);backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:11px 14px;font-size:10.5px;line-height:1.85;max-width:210px;}
+  .legend h4{font-size:11px;color:#5BD06A;margin-bottom:3px;}
+  .legend .r{display:flex;align-items:center;gap:7px;cursor:pointer;opacity:.85;transition:.15s;}
+  .legend .r:hover{opacity:1;}
+  .legend .d{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+  .reset{position:absolute;top:64px;left:16px;z-index:15;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;
+    border:1px solid rgba(255,255,255,.14);background:rgba(13,22,16,.7);color:#cfe;padding:7px 12px;border-radius:8px;backdrop-filter:blur(10px);display:none;}
+  .reset.active{background:linear-gradient(135deg,#4CC65C,#1F7A33);color:#fff;border-color:transparent;}
+  .toolbar{position:absolute;top:60px;left:14px;z-index:16;display:flex;flex-direction:column;gap:7px;max-width:172px;}
+  .toolbar button{font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.14);background:rgba(13,22,16,.72);color:#dfeede;padding:8px 12px;border-radius:9px;backdrop-filter:blur(10px);text-align:left;transition:.15s;}
+  .toolbar button:hover{background:rgba(30,60,40,.82);}
+  .toolbar button.active{background:linear-gradient(135deg,#4CC65C,#1F7A33);color:#fff;border-color:transparent;box-shadow:0 3px 12px rgba(60,180,80,.35);}
+  .heatcap{position:absolute;left:14px;bottom:176px;z-index:16;background:rgba(13,22,16,.82);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 12px;font-size:10.5px;line-height:1.6;max-width:230px;}
+  .scenario{position:absolute;left:50%;bottom:52px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;z-index:25;width:min(640px,92vw);background:rgba(13,22,16,.93);backdrop-filter:blur(20px);border:1px solid rgba(120,220,140,.22);border-radius:16px;padding:16px 18px 18px;transition:.35s;}
+  .scenario.open{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+  .scenario .sc-close{position:absolute;top:9px;right:12px;cursor:pointer;background:none;border:none;color:rgba(255,255,255,.5);font-size:16px;}
+  .sc-title{font-size:13px;font-weight:800;color:#5BD06A;margin-bottom:10px;}
+  .sc-steps{display:flex;gap:6px;flex-wrap:wrap;}
+  .sc-steps button{font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#cfe;padding:7px 11px;border-radius:8px;transition:.15s;}
+  .sc-steps button:hover{background:rgba(255,255,255,.12);}
+  .sc-steps button.active{background:linear-gradient(135deg,#4CC65C,#1F7A33);color:#fff;border-color:transparent;}
+  .sc-cap{margin-top:11px;font-size:13px;line-height:1.5;color:#e6f2e6;min-height:20px;}
+  .sec{margin-top:4px;}
+  .sec-h{font-size:11px;font-weight:800;color:#5BD06A;margin-bottom:6px;}
+  .sec-row{display:flex;align-items:center;gap:8px;font-size:12px;color:#dfe7df;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+  .sec .sw{width:22px;height:13px;border-radius:3px;flex-shrink:0;border:1px solid rgba(0,0,0,.25);}
+  /* heatcap (warmteverlies-legenda) */
+  .heatcap b{color:#ffd8c0;}
+  .heatbar{height:9px;border-radius:5px;margin:8px 0 2px;background:linear-gradient(90deg,#2e8b57,#ffd23a,#ff7a22,#ff2a14);box-shadow:inset 0 0 0 1px rgba(0,0,0,.3);}
+  .heatscale{display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,.45);margin-bottom:7px;}
+  .heatrow{display:flex;align-items:center;gap:7px;font-size:11.5px;padding:2px 0;}
+  .heatrow .hv{margin-left:auto;font-weight:800;color:#fff;}
+  .heatrow .hsw{width:11px;height:11px;border-radius:3px;flex-shrink:0;box-shadow:0 0 6px currentColor;}
+  .heattot{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);font-size:10.5px;color:rgba(255,255,255,.6);}
+  /* batterij-chip */
+  .batchip{position:absolute;top:60px;left:50%;transform:translateX(-50%);z-index:18;display:none;align-items:center;gap:9px;
+    background:rgba(13,22,16,.85);backdrop-filter:blur(14px);border:1px solid rgba(120,220,140,.25);border-radius:30px;
+    padding:9px 16px 9px 12px;font-size:13px;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.4);}
+  .batchip.show{display:flex;}
+  .batchip .bc-ico{font-size:17px;}
+  .batchip #bcTxt{color:#cdeccd;}
+  /* seizoenen-paneel */
+  .season{position:absolute;left:50%;bottom:52px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;z-index:25;
+    width:min(560px,92vw);background:rgba(13,22,16,.93);backdrop-filter:blur(20px);border:1px solid rgba(120,220,140,.22);
+    border-radius:16px;padding:16px 18px 18px;transition:.35s;}
+  .season.open{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+  .season .se-close{position:absolute;top:9px;right:12px;cursor:pointer;background:none;border:none;color:rgba(255,255,255,.5);font-size:16px;}
+  .se-title{font-size:13px;font-weight:800;color:#7fe0a0;margin-bottom:11px;}
+  .se-toggle{display:flex;gap:8px;margin-bottom:12px;}
+  .se-toggle button{flex:1;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.05);color:#cfe;padding:9px 0;border-radius:10px;transition:.18s;}
+  .se-toggle #seSummer.active{background:linear-gradient(135deg,#ffd34d,#ff8a2a);color:#3a2400;border-color:transparent;box-shadow:0 3px 14px rgba(255,150,40,.4);}
+  .se-toggle #seWinter.active{background:linear-gradient(135deg,#7fd0ff,#2f7ad0);color:#06203a;border-color:transparent;box-shadow:0 3px 14px rgba(60,150,255,.4);}
+  .se-thermos{display:flex;align-items:flex-end;justify-content:center;gap:18px;margin-bottom:11px;}
+  .th{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .th-tube{width:16px;height:88px;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+    position:relative;overflow:hidden;display:flex;align-items:flex-end;}
+  .th-fill{width:100%;border-radius:0 0 8px 8px;transition:height .6s cubic-bezier(.4,0,.2,1),background .6s;}
+  .th-lab{font-size:11px;text-align:center;color:rgba(255,255,255,.7);line-height:1.25;}
+  .th-lab b{font-size:15px;color:#fff;}
+  .th-delta{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#ffae6a;
+    background:rgba(255,140,60,.14);border:1px solid rgba(255,140,60,.3);border-radius:9px;padding:5px 9px;margin-bottom:30px;white-space:nowrap;}
+  .se-cap{font-size:13px;line-height:1.5;color:#e6f2e6;text-align:center;min-height:20px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">🌿</div>
+      <div><div class="ttl">Duurzaam Huis</div><div class="sub">Interactief ontwerp · klik op een onderdeel</div></div>
+    </div>
+    <div class="tabs">
+      <button id="t-3d" class="active" onclick="showTab('3d')">3D Model</button>
+      <button id="t-bg" onclick="showTab('bg')">Begane grond</button>
+      <button id="t-v1" onclick="showTab('v1')">1e Verdieping</button>
+    </div>
+  </div>
+
+  <div id="view-3d" class="view"><canvas id="c3d"></canvas>
+    <div class="hint">Sleep om te draaien · scroll om te zoomen · <b>klik</b> op een onderdeel</div>
+  </div>
+  <div id="view-bg" class="view hidden"><div class="plan-wrap" id="plan-bg"></div>
+    <div class="hint">Klik op een ruimte voor info</div>
+  </div>
+  <div id="view-v1" class="view hidden"><div class="plan-wrap" id="plan-v1"></div>
+    <div class="hint">Klik op een ruimte voor info</div>
+  </div>
+
+  <div class="toolbar" id="toolbar">
+    <button id="interiorBtn" onclick="toggleInterior()">Interieur tonen</button>
+    <button id="explodeBtn" onclick="toggleExploded()">Bekijk constructie</button>
+    <button id="heatBtn" onclick="toggleHeatmap()">Warmteverlies</button>
+    <button id="seasonBtn" onclick="toggleSeason()">🌦️ Seizoenen</button>
+    <button id="scenarioBtn" onclick="openScenario()">Een dag in het huis</button>
+    <button id="resetBtn" onclick="resetView()">↺ Overzicht</button>
+  </div>
+  <div class="heatcap" id="heatCap" style="display:none">
+    <b>Warmteverlies bij ΔT = 20 °C</b>
+    <div class="heatbar"></div>
+    <div class="heatscale"><span>weinig</span><span>veel warmte eruit</span></div>
+    <div class="heatrow"><span class="hsw" style="background:#ff2a14"></span>Ramen<span class="hv">1.969 W</span></div>
+    <div class="heatrow"><span class="hsw" style="background:#ff7a22"></span>Muren<span class="hv">691 W</span></div>
+    <div class="heatrow"><span class="hsw" style="background:#46c85a"></span>Dak<span class="hv">333 W</span></div>
+    <div class="heatrow"><span class="hsw" style="background:#ffcf3a"></span>Deur<span class="hv">116 W</span></div>
+    <div class="heattot">Totaal ≈ 3.109 W · H = 155,4 W/K</div>
+  </div>
+  <div class="batchip" id="batChip"><span class="bc-ico">🔋</span><span id="bcTxt">Batterij 100%</span></div>
+  <div class="scenario" id="scenario">
+    <button class="sc-close" onclick="closeScenario()">✕</button>
+    <div class="sc-title">Een dag in het huis</div>
+    <div class="sc-steps" id="scSteps"></div>
+    <div class="sc-cap" id="scCap"></div>
+  </div>
+
+  <div class="season" id="season">
+    <button class="se-close" onclick="closeSeason()">✕</button>
+    <div class="se-title">🌦️ Seizoenen — voel het warmteverschil</div>
+    <div class="se-toggle">
+      <button id="seSummer" class="active" onclick="setSeason('zomer')">☀️ Zomer</button>
+      <button id="seWinter" onclick="setSeason('winter')">❄️ Winter</button>
+    </div>
+    <div class="se-thermos">
+      <div class="th"><div class="th-tube"><div class="th-fill" id="thIn"></div></div><div class="th-lab">Binnen<br><b id="thInV">21°</b></div></div>
+      <div class="th-delta" id="thDelta">ΔT 7°</div>
+      <div class="th"><div class="th-tube"><div class="th-fill" id="thOut"></div></div><div class="th-lab">Buiten<br><b id="thOutV">28°</b></div></div>
+    </div>
+    <div class="se-cap" id="seCap"></div>
+  </div>
+
+  <div class="legend" id="legend">
+    <h4>Onderdelen</h4>
+  </div>
+
+  <div class="panel" id="panel">
+    <button class="close" onclick="closePanel()">✕</button>
+    <div class="pcat" id="p-cat"></div>
+    <div class="pname" id="p-name"></div>
+    <div class="prow"><div class="plabel">Materiaal</div><div class="pval" id="p-mat"></div></div>
+    <div class="prow"><div class="plabel">Afmeting / gegevens</div><div class="pval" id="p-dim"></div></div>
+    <div class="prow"><div class="plabel">Duurzaamheid</div><div class="pleaf" id="p-sus"></div></div>
+    <div class="prow" id="p-section-row" style="display:none"><div class="plabel">Opbouw (doorsnede)</div><div id="p-section"></div></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ============================================================
+// INFO-DATABASE
+// ============================================================
+const INFO = {
+  sedum:    {cat:"Dak", name:"Sedumdak", mat:"Kleine vetplantjes op het dak", dim:"135 m² (het hele platte dak)", sus:"Bij regen zuigen de plantjes water op, een beetje zoals een spons. Een groen dak houdt zo ongeveer de helft van de regen vast. Daardoor loopt het riool niet meteen vol, en in de zomer blijft het dak lekker koel.", color:"#4a8b3a"},
+  panelen:  {cat:"Energie", name:"Zonnepanelen", mat:"21 zonnepanelen", dim:"samen 9,24 kWp", sus:"Deze 21 panelen maken samen ongeveer 8.300 kWh stroom per jaar. Het huis gebruikt er zo'n 8.200, dus je houdt nog een beetje over. Zo draait het huis helemaal op zijn eigen stroom.", color:"#16233f"},
+  muur:     {cat:"Muur", name:"Buitenmuur", mat:"Hout met dik isolatieschuim ertussen", dim:"25 cm dik", sus:"Door de dikke laag schuim lekt er bijna geen warmte naar buiten, maar zo'n 0,17 watt per vierkante meter. Daardoor hoef je bijna niet te stoken. Hout is ook nog eens veel beter voor het milieu dan beton.", color:"#c8b896"},
+  ramen:    {cat:"Muur", name:"Ramen", mat:"Dubbel glas (HR++)", dim:"samen ongeveer 82 m²", sus:"De grote ramen geven veel licht en uitzicht. Toch verliezen ze samen bijna 2.000 watt warmte als het buiten vriest. Dat is meer dan de muren, het dak en de deur bij elkaar. Het speciale dubbele glas houdt dat zo laag mogelijk.", color:"#9ccadf"},
+  deur:     {cat:"Muur", name:"Voordeur", mat:"Hout", dim:"1,4 m breed", sus:"De deur is 1,4 meter breed, bijna twee keer zo breed als een gewone deur van 0,8 meter. Zo kun je er makkelijk door met een rollator of rolstoel.", color:"#4a3828"},
+  vloer:    {cat:"Vloer", name:"Bamboe vloer", mat:"Bamboe met isolatie eronder", dim:"270 m² in totaal", sus:"Bamboe groeit ontzettend snel, sommige soorten wel bijna een meter per dag. Er groeit dus zo weer nieuwe, en daarom is het een duurzame keuze.", color:"#c4a96a"},
+  moestuin: {cat:"Tuin", name:"Moestuin", mat:"Groenten en kruiden", dim:"30 m²", sus:"Op 30 m² kweek je al gauw zo'n 100 kg groente per jaar, zonder vervoer of verpakking. Lieveheersbeestjes en andere beestjes houden de plaagdieren weg, dus je hebt geen gif nodig.", color:"#5a7a3c"},
+  regenton: {cat:"Tuin", name:"Regentonnen", mat:"3 tonnen aan de zijkant", dim:"samen ongeveer 600 liter", sus:"De drie tonnen vangen samen zo'n 600 liter regenwater op. Dat klinkt veel, maar het is genoeg voor een paar weken de moestuin water geven. Na een flinke regenbui zitten ze alweer vol.", color:"#2a6a8a"},
+  compost:  {cat:"Tuin", name:"Compostbak", mat:"Voor etensresten en tuinafval", dim:"1,2 × 1,0 m", sus:"Etensresten en tuinafval worden hier vanzelf weer aarde. Dat scheelt al snel honderden kilo's afval per jaar. Die aarde gebruik je daarna als mest in de moestuin.", color:"#6b4423"},
+  oplaadpunt:{cat:"Energie", name:"Laadpaal", mat:"Snelle laadpaal (22 kW)", dim:"22 kW", sus:"Met 22 kW laad je in een uur al zo'n 100 km bij. 's Nachts is de auto dus helemaal vol, opgeladen met je eigen zonnestroom.", color:"#00cc44"},
+  batterij: {cat:"Energie", name:"Thuisbatterij", mat:"2× Tesla Powerwall 3", dim:"samen 27 kWh · rendement 97,5%", sus:"Overdag maken de panelen meer stroom dan het huis gebruikt. Dat overschot gaat in de twee accu's: samen 27 kWh, genoeg voor ongeveer een hele dag. 's Avonds en 's nachts levert de batterij die stroom weer terug, zodat het huis dag én nacht op eigen zon draait.", color:"#3aa0ff"},
+  lift:     {cat:"Comfort", name:"Lift", mat:"Personenlift", dim:"1,5 × 1,5 m", sus:"De lift is 1,5 bij 1,5 meter, ruim genoeg voor een rolstoel. Zo kom je ook op latere leeftijd makkelijk naar boven, zonder de trap op te hoeven.", color:"#cc3333"},
+  terras:   {cat:"Tuin", name:"Terras en tuin", mat:"Houten terras en groene tuin", dim:"terras 8 × 3,5 m (28 m²)", sus:"Een terras van 28 m² in een tuin die niet betegeld is. De regen zakt zo de grond in. Dat is fijn voor de natuur en voorkomt wateroverlast.", color:"#9a7a58"},
+  bomen:    {cat:"Omgeving", name:"Bomen en planten", mat:"Bomen en vaste planten", dim:"groot perceel", sus:"Eén grote boom haalt per jaar al gauw 20 kg CO₂ uit de lucht. Samen met de planten past dat mooi bij de rustige, groene omgeving van Wassenaar.", color:"#2d6e20"},
+};
+
+// ============================================================
+// THREE.JS 3D MODEL
+// ============================================================
+const HW=15,HD=9,FH=3,TH=6,WT=0.25;
+const canvas=document.getElementById("c3d");
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.3;
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0xcfe6cf,0.006);
+const skyG=new THREE.SphereGeometry(300,32,32);
+const skyM=new THREE.ShaderMaterial({side:THREE.BackSide,
+  uniforms:{top:{value:new THREE.Color(0x5599dd)},bot:{value:new THREE.Color(0xd5ead5)}},
+  vertexShader:`varying vec3 v;void main(){v=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+  fragmentShader:`uniform vec3 top,bot;varying vec3 v;void main(){float h=normalize(v).y;gl_FragColor=vec4(mix(bot,top,max(h,0.)),1.);}`});
+scene.add(new THREE.Mesh(skyG,skyM));
+
+const camera=new THREE.PerspectiveCamera(45,1,0.1,600);
+const amb=new THREE.AmbientLight(0xffffff,0.5);scene.add(amb);
+const sun=new THREE.DirectionalLight(0xfff8ee,1.4);sun.position.set(18,28,12);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-35;sun.shadow.camera.right=35;sun.shadow.camera.top=35;sun.shadow.camera.bottom=-35;sun.shadow.bias=-0.0008;scene.add(sun);
+const fl=new THREE.DirectionalLight(0xaaddff,0.3);fl.position.set(-12,12,-8);scene.add(fl);
+
+const mat={
+  wallExt:new THREE.MeshStandardMaterial({color:0xcabfa0,roughness:0.78}),
+  reveal:new THREE.MeshStandardMaterial({color:0xeae2d2,roughness:0.55}),
+  wallTrim:new THREE.MeshStandardMaterial({color:0xf2ebdc,roughness:0.5}),
+  woodClad:new THREE.MeshStandardMaterial({color:0x9c7e5c,roughness:0.85}),
+  woodDk:new THREE.MeshStandardMaterial({color:0x5c4033,roughness:0.7}),
+  bamboo:new THREE.MeshStandardMaterial({color:0xc4a96a,roughness:0.65}),
+  glass:new THREE.MeshPhysicalMaterial({color:0x9ccadf,transparent:true,opacity:0.32,roughness:0.02,clearcoat:1}),
+  glassF:new THREE.MeshStandardMaterial({color:0x2e2e2e,roughness:0.3,metalness:0.5}),
+  door:new THREE.MeshStandardMaterial({color:0x4a3828,roughness:0.5}),
+  doorF:new THREE.MeshStandardMaterial({color:0x2a2a2a,roughness:0.3,metalness:0.5}),
+  roof:new THREE.MeshStandardMaterial({color:0xe8e0d4,roughness:0.5}),
+  sedum:new THREE.MeshLambertMaterial({color:0x4a8b3a}),sedumB:new THREE.MeshLambertMaterial({color:0x5da04a}),sedumC:new THREE.MeshLambertMaterial({color:0x3d7530}),
+  solar:new THREE.MeshStandardMaterial({color:0x16233f,roughness:0.1,metalness:0.9}),
+  solarF:new THREE.MeshStandardMaterial({color:0xd0d0d0,roughness:0.2,metalness:0.9}),
+  ground:new THREE.MeshLambertMaterial({color:0x4a7a32}),grass:new THREE.MeshLambertMaterial({color:0x5ea040}),
+  path:new THREE.MeshStandardMaterial({color:0xd4c4a0,roughness:0.95}),
+  terrace:new THREE.MeshStandardMaterial({color:0x9a7a58,roughness:0.75}),
+  moestuin:new THREE.MeshLambertMaterial({color:0x5a7a3c}),compost:new THREE.MeshLambertMaterial({color:0x6b4423}),
+  barrel:new THREE.MeshStandardMaterial({color:0x2a6a8a,roughness:0.35}),
+  charger:new THREE.MeshStandardMaterial({color:0x2a2a2a,roughness:0.15,metalness:0.4}),
+  concrete:new THREE.MeshStandardMaterial({color:0xbbb5a8,roughness:0.9}),
+  planter:new THREE.MeshStandardMaterial({color:0x6b5640,roughness:0.8}),
+  trunk:new THREE.MeshLambertMaterial({color:0x5a3a1a}),foliage:new THREE.MeshLambertMaterial({color:0x2d6e20}),foliageL:new THREE.MeshLambertMaterial({color:0x3d8e30}),
+  pipe:new THREE.MeshStandardMaterial({color:0x777777,roughness:0.3,metalness:0.6}),
+  parapet:new THREE.MeshStandardMaterial({color:0xb8af96,roughness:0.6}),
+  lift:new THREE.MeshStandardMaterial({color:0x9a9a9a,roughness:0.3,metalness:0.5}),
+};
+
+const root=new THREE.Group();scene.add(root);
+// clickable groups
+const groups={};
+["sedum","panelen","muur","ramen","deur","vloer","moestuin","regenton","compost","oplaadpunt","batterij","lift","terras","bomen"].forEach(k=>{
+  const g=new THREE.Group();g.userData.partId=k;groups[k]=g;root.add(g);
+});
+const staticG=new THREE.Group();root.add(staticG); // niet-klikbaar (grond, lucht-achtig)
+let cur=staticG;
+function use(k){cur=k?groups[k]:staticG;}
+function add(m){cur.add(m);return m;}
+function box(w,h,d,x,y,z,m,cs){if(cs===undefined)cs=true;const e=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);e.position.set(x,y,z);e.castShadow=cs;e.receiveShadow=true;return add(e);}
+// plekken waar warmte naar buiten lekt (voor de warmte-animatie). pow = relatief warmteverlies.
+const leakSpots=[];
+function leak(x,y,z,nx,nz,w,h,pow,type){leakSpots.push({x,y,z,nx,nz,w,h,pow,type});}
+
+// grond
+use(null);
+const gnd=new THREE.Mesh(new THREE.PlaneGeometry(120,120),mat.ground);gnd.rotation.x=-Math.PI/2;gnd.position.set(HW/2,-0.02,HD/2);gnd.receiveShadow=true;add(gnd);
+use("terras");
+const lot=new THREE.Mesh(new THREE.PlaneGeometry(34,30),mat.grass);lot.rotation.x=-Math.PI/2;lot.position.set(HW/2,-0.01,HD/2);lot.receiveShadow=true;add(lot);
+
+// fundering + vloeren
+use("vloer");
+box(HW+0.3,0.3,HD+0.3,HW/2,0.15,HD/2,mat.concrete,false);
+box(HW,0.12,HD,HW/2,0.06,HD/2,mat.bamboo,false);
+box(HW-0.1,0.15,HD-0.1,HW/2,FH,HD/2,mat.bamboo,false);
+
+// muren
+function buildWall(uLen,holes,rotY,px,pz){
+  const s=new THREE.Shape();s.moveTo(0,0);s.lineTo(uLen,0);s.lineTo(uLen,TH);s.lineTo(0,TH);s.lineTo(0,0);
+  holes.forEach(h=>{const p=new THREE.Path();const x1=h.u-h.w/2,x2=h.u+h.w/2,y1=h.v-h.h/2,y2=h.v+h.h/2;p.moveTo(x1,y1);p.lineTo(x2,y1);p.lineTo(x2,y2);p.lineTo(x1,y2);p.lineTo(x1,y1);s.holes.push(p);});
+  const g=new THREE.ExtrudeGeometry(s,{depth:WT,bevelEnabled:false});
+  const m=new THREE.Mesh(g,[mat.wallExt,mat.reveal]);m.position.set(px,0,pz);m.rotation.y=rotY;m.castShadow=true;m.receiveShadow=true;add(m);
+}
+function winXY(ax,ay,fz,w,h,o,divs,fb){
+  use("ramen");
+  const gl=new THREE.Mesh(new THREE.PlaneGeometry(w-0.12,h-0.12),mat.glass);gl.position.set(ax,ay,fz-o*0.11);if(o<0)gl.rotation.y=Math.PI;add(gl);
+  leak(ax,ay,fz+o*0.05,0,o,w,h,w*h*1.20,"raam");
+  const z=fz-o*0.04;[h/2,-h/2].forEach(d=>box(w,0.05,0.07,ax,ay+d,z,mat.glassF,false));[w/2,-w/2].forEach(d=>box(0.05,h,0.07,ax+d,ay,z,mat.glassF,false));
+  for(let i=1;i<divs;i++)box(0.03,h,0.05,ax-w/2+(i/divs)*w,ay,z,mat.glassF,false);
+  box(w,0.03,0.05,ax,ay+0.06,z,mat.glassF,false);
+  use("muur");
+  box(w+0.18,0.06,0.16,ax,ay-h/2-0.04,fz+o*0.04,mat.wallTrim,false);box(w+0.18,0.09,0.06,ax,ay+h/2+0.06,fz+o*0.02,mat.wallTrim,false);
+  if(fb){use("ramen");const fy=ay-h/2-0.16;box(w*0.85,0.2,0.24,ax,fy,fz+o*0.16,mat.planter,false);const cs=[0xe880b0,0xf0d060,0xff6688,0xaa66cc,0xff4466];for(let i=0;i<6;i++){const f=new THREE.Mesh(new THREE.SphereGeometry(0.06,5,5),new THREE.MeshLambertMaterial({color:cs[i%5]}));f.position.set(ax-w*0.35+i*(w*0.7/5),fy+0.16,fz+o*0.18);add(f);}}
+}
+function winZY(az,ay,fx,w,h,o,divs,fb){
+  use("ramen");
+  const gl=new THREE.Mesh(new THREE.PlaneGeometry(w-0.12,h-0.12),mat.glass);gl.position.set(fx-o*0.11,ay,az);gl.rotation.y=Math.PI/2;add(gl);
+  leak(fx+o*0.05,ay,az,o,0,w,h,w*h*1.20,"raam");
+  const x=fx-o*0.04;[h/2,-h/2].forEach(d=>box(0.07,0.05,w,x,ay+d,az,mat.glassF,false));[w/2,-w/2].forEach(d=>box(0.07,h,0.05,x,ay,az+d,mat.glassF,false));
+  for(let i=1;i<divs;i++)box(0.05,h,0.03,x,ay,az-w/2+(i/divs)*w,mat.glassF,false);
+  box(0.05,0.03,w,x,ay+0.06,az,mat.glassF,false);
+  use("muur");
+  box(0.16,0.06,w+0.18,fx+o*0.04,ay-h/2-0.04,az,mat.wallTrim,false);box(0.06,0.09,w+0.18,fx+o*0.02,ay+h/2+0.06,az,mat.wallTrim,false);
+  if(fb){use("ramen");const fy=ay-h/2-0.16;box(0.24,0.2,w*0.85,fx+o*0.16,fy,az,mat.planter,false);const cs=[0xe880b0,0xf0d060,0xff6688,0xaa66cc,0xff4466];for(let i=0;i<6;i++){const f=new THREE.Mesh(new THREE.SphereGeometry(0.06,5,5),new THREE.MeshLambertMaterial({color:cs[i%5]}));f.position.set(fx+o*0.18,fy+0.16,az-w*0.35+i*(w*0.7/5));add(f);}}
+}
+
+// ZUID
+use("muur");
+const fz=HD+WT/2;
+buildWall(HW,[{u:7.5,v:1.375,w:1.5,h:2.65},{u:6.4,v:1.5,w:0.55,h:2.2},{u:2,v:1.6,w:2,h:1.6},{u:13.8,v:1.5,w:1.2,h:1.5},{u:2.5,v:4.6,w:3,h:1.6},{u:7.5,v:4.6,w:2,h:1.4},{u:13,v:4.6,w:2,h:1.4}],0,0,HD-WT/2);
+box(HW+0.05,0.06,0.03,HW/2,FH,fz+0.01,mat.wallTrim,false);box(HW+0.05,0.06,0.03,HW/2,TH-0.03,fz+0.01,mat.wallTrim,false);box(HW+0.02,0.55,0.03,HW/2,0.4,fz+0.01,mat.woodClad,false);
+use("deur");
+box(1.42,2.6,0.08,7.5,1.32,fz-0.06,mat.door,false);box(0.06,2.66,0.12,6.79,1.35,fz-0.04,mat.doorF,false);box(0.06,2.66,0.12,8.21,1.35,fz-0.04,mat.doorF,false);box(1.5,0.06,0.12,7.5,2.66,fz-0.04,mat.doorF,false);box(0.03,0.16,0.06,8,1.2,fz-0.02,mat.glassF,false);
+leak(7.5,1.32,fz+0.05,0,1,1.42,2.6,5.8,"deur");
+winXY(6.4,1.5,fz,0.55,2.2,1,1);winXY(2,1.6,fz,2,1.6,1,2);winXY(13.8,1.5,fz,1.2,1.5,1,1);winXY(2.5,4.6,fz,3,1.6,1,3,true);winXY(7.5,4.6,fz,2,1.4,1,2);winXY(13,4.6,fz,2,1.4,1,2);
+// NOORD
+use("muur");const bz=-WT/2;
+buildWall(HW,[{u:2.5,v:1.7,w:3,h:2.2},{u:6.5,v:1.7,w:2.2,h:2.2},{u:11.5,v:1.7,w:3,h:2.2},{u:3,v:4.6,w:3,h:1.6},{u:6,v:4.6,w:1.5,h:1.4},{u:12.5,v:4.6,w:3,h:1.6}],0,0,-WT/2);
+box(HW+0.05,0.06,0.03,HW/2,FH,bz-0.01,mat.wallTrim,false);box(HW+0.05,0.06,0.03,HW/2,TH-0.03,bz-0.01,mat.wallTrim,false);box(HW+0.02,0.55,0.03,HW/2,0.4,bz-0.01,mat.woodClad,false);
+winXY(2.5,1.7,bz,3,2.2,-1,3);winXY(6.5,1.7,bz,2.2,2.2,-1,2);winXY(11.5,1.7,bz,3,2.2,-1,3);winXY(3,4.6,bz,3,1.6,-1,3,true);winXY(6,4.6,bz,1.5,1.4,-1,1);winXY(12.5,4.6,bz,3,1.6,-1,3,true);
+// WEST
+use("muur");const wx=-WT/2;
+buildWall(HD,[{u:2.5,v:1.7,w:2.5,h:2},{u:6.5,v:1.7,w:2,h:2},{u:2,v:4.6,w:2.2,h:1.6},{u:5.5,v:4.6,w:2,h:1.5},{u:7.8,v:4.6,w:1.2,h:1.2}],-Math.PI/2,WT/2,0);
+box(0.03,0.06,HD+0.05,wx-0.01,FH,HD/2,mat.wallTrim,false);box(0.03,0.06,HD+0.05,wx-0.01,TH-0.03,HD/2,mat.wallTrim,false);box(0.03,0.55,HD+0.02,wx-0.01,0.4,HD/2,mat.woodClad,false);
+winZY(2.5,1.7,wx,2.5,2,-1,2,true);winZY(6.5,1.7,wx,2,2,-1,2);winZY(2,4.6,wx,2.2,1.6,-1,2);winZY(5.5,4.6,wx,2,1.5,-1,2);winZY(7.8,4.6,wx,1.2,1.2,-1,1);
+// OOST
+use("muur");const ex=HW+WT/2;
+buildWall(HD,[{u:2,v:1.7,w:2,h:2},{u:5.5,v:1.7,w:2.5,h:2},{u:8,v:1.4,w:1,h:1},{u:2,v:4.6,w:2.2,h:1.6},{u:5.5,v:4.6,w:2.5,h:1.6},{u:8,v:4.6,w:1.2,h:1}],-Math.PI/2,HW+WT/2,0);
+box(0.03,0.06,HD+0.05,ex+0.01,FH,HD/2,mat.wallTrim,false);box(0.03,0.06,HD+0.05,ex+0.01,TH-0.03,HD/2,mat.wallTrim,false);box(0.03,0.55,HD+0.02,ex+0.01,0.4,HD/2,mat.woodClad,false);
+winZY(2,1.7,ex,2,2,1,2,true);winZY(5.5,1.7,ex,2.5,2,1,2);winZY(8,1.4,ex,1,1,1,1);winZY(2,4.6,ex,2.2,1.6,1,2);winZY(5.5,4.6,ex,2.5,1.6,1,2);winZY(8,4.6,ex,1.2,1,1,1);
+
+// extra lek-plekken voor de warmte-animatie: muren (weinig), dak (heel weinig)
+for(let i=0;i<4;i++){const x=2.5+i*3.3;
+  leak(x,3.2,fz+0.05,0,1,1.2,1.2,0.55,"muur");   // zuid
+  leak(x,3.2,bz-0.05,0,-1,1.2,1.2,0.55,"muur");  // noord
+}
+for(let i=0;i<3;i++){const z=2+i*2.5;
+  leak(wx-0.05,3.2,z,-1,0,1.2,1.2,0.55,"muur");  // west
+  leak(ex+0.05,3.2,z,1,0,1.2,1.2,0.55,"muur");   // oost
+}
+for(let i=0;i<5;i++)leak(2.5+Math.random()*10,TH+0.25,1.5+Math.random()*6,0,0,1,1,0.18,"dak");
+
+// DAK
+use("sedum");
+box(HW-0.2,0.12,HD-0.2,HW/2,TH+0.06,HD/2,mat.roof,false);
+const sB=new THREE.Mesh(new THREE.BoxGeometry(HW-0.4,0.08,HD-0.4),mat.sedum);sB.position.set(HW/2,TH+0.16,HD/2);sB.receiveShadow=true;add(sB);
+const sM=[mat.sedum,mat.sedumB,mat.sedumC];
+for(let i=0;i<90;i++){const sx=0.8+Math.random()*(HW-1.6),sz=0.8+Math.random()*(HD-1.6),sr=0.12+Math.random()*0.35;const g=new THREE.SphereGeometry(sr,6,5);g.scale(1,0.35,1);const m=new THREE.Mesh(g,sM[i%3]);m.position.set(sx,TH+0.22,sz);add(m);}
+use("muur");
+const pH=0.35;[[HW+0.15,0.12,HW/2,-.06],[HW+0.15,0.12,HW/2,HD+.06],[0.12,HD+.3,-.06,HD/2],[0.12,HD+.3,HW+.06,HD/2]].forEach(a=>{box(a[0],pH,a[1],a[2],TH+pH/2,a[3],mat.parapet);box(a[0]+0.1,0.04,a[1]+0.08,a[2],TH+pH+0.02,a[3],mat.wallTrim);});
+// 21 panelen
+use("panelen");
+for(let r=0;r<3;r++)for(let c=0;c<7;c++){const px=0.7+c*1.85+0.85,pz=0.7+r*1.2+0.5;if(px+0.85<HW-0.5&&pz+0.5<HD-0.5){const pm=new THREE.Mesh(new THREE.BoxGeometry(1.7,0.03,1),mat.solar);pm.position.set(px,TH+0.38,pz);pm.rotation.x=-0.04;pm.castShadow=true;add(pm);const ed=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.7,0.035,1)),new THREE.LineBasicMaterial({color:0xcccccc}));ed.position.copy(pm.position);ed.rotation.copy(pm.rotation);add(ed);[-0.75,0.75].forEach(lx=>box(0.03,0.14,0.03,px+lx,TH+0.27,pz,mat.solarF,false));}}
+// lift uitbouw
+use("lift");
+box(1.6,0.8,1.6,9.75,TH+0.6,HD-1.1,mat.lift);
+
+// TERRAS + paden + meubels
+use("terras");
+for(let i=0;i<18;i++)box(8,0.035,0.16,HW/2-1,0.035,-0.4-i*0.21,mat.terrace,false);
+for(let i=0;i<=8;i++)box(0.06,1,0.06,HW/2-5+i,0.5,-4.2,mat.woodDk,false);
+box(8.1,0.06,0.06,HW/2-1,0.95,-4.2,mat.woodDk,false);box(8.1,0.06,0.06,HW/2-1,0.55,-4.2,mat.woodDk,false);
+box(3,0.1,1.5,7.5,0.05,HD+0.75,mat.concrete,false);box(2.5,0.08,0.4,7.5,0.04,HD+1.7,mat.concrete,false);box(2.5,0.04,5,7.5,0.02,HD+4.5,mat.path,false);
+// terrasmeubels
+const tbX=HW/2-1,tbZ=-2;box(0.08,0.5,0.08,tbX,0.25,tbZ,mat.woodDk,false);
+const tT=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.55,0.05,20),mat.terrace);tT.position.set(tbX,0.52,tbZ);tT.castShadow=true;add(tT);
+[[-0.9,0],[0.9,0]].forEach(a=>{box(0.4,0.04,0.4,tbX+a[0],0.28,tbZ+a[1],mat.woodDk,false);box(0.4,0.35,0.04,tbX+a[0],0.45,tbZ+a[1]+(a[0]<0?-0.18:0.18),mat.woodDk,false);[[-0.15,-0.15],[0.15,-0.15],[-0.15,0.15],[0.15,0.15]].forEach(l=>box(0.04,0.28,0.04,tbX+a[0]+l[0],0.14,tbZ+a[1]+l[1],mat.woodDk,false));});
+box(0.05,2.2,0.05,tbX,1.1,tbZ,mat.woodDk,false);
+const par=new THREE.Mesh(new THREE.ConeGeometry(1.4,0.5,12),new THREE.MeshStandardMaterial({color:0x5da04a,roughness:0.8}));par.position.set(tbX,2.35,tbZ);par.castShadow=true;add(par);
+
+// MOESTUIN
+use("moestuin");
+const mX=HW+4,mZ=HD/2;box(6,0.35,5,mX,0.175,mZ,mat.moestuin,false);
+[[6.1,.1,mX,mZ-2.5],[6.1,.1,mX,mZ+2.5]].forEach(a=>box(a[0],0.4,a[1],a[2],0.2,a[3],mat.woodDk,false));[[.1,5.1,mX-3,mZ],[.1,5.1,mX+3,mZ]].forEach(a=>box(a[0],0.4,a[1],a[2],0.2,a[3],mat.woodDk,false));
+for(let row=0;row<5;row++)for(let p=0;p<10;p++){const sh=0.1+Math.random()*0.15;const cs=[0x4a8b3a,0x6aab4e,0x7ac04e,0x88cc44,0xcc4444];const sp=new THREE.Mesh(new THREE.SphereGeometry(sh,6,5),new THREE.MeshLambertMaterial({color:cs[Math.floor(Math.random()*5)]}));sp.position.set(mX-2.5+p*0.55,0.45+sh/2,mZ-2+row);add(sp);}
+function flw(x,z){const st=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,0.25,4),new THREE.MeshLambertMaterial({color:0x3a7a2a}));st.position.set(x,0.125,z);add(st);const cs=[0xe880b0,0xf0d060,0xff6688,0xaa66cc,0xffaa44];const f=new THREE.Mesh(new THREE.SphereGeometry(0.07,5,5),new THREE.MeshLambertMaterial({color:cs[Math.floor(Math.random()*5)]}));f.position.set(x,0.3,z);add(f);}
+for(let i=0;i<40;i++){flw(mX-3.2+Math.random()*6.4,mZ-2.9);flw(mX-3.2+Math.random()*6.4,mZ+2.9);}
+for(let i=0;i<20;i++){flw(mX-3.2,mZ-2.5+Math.random()*5);flw(mX+3.2,mZ-2.5+Math.random()*5);}
+// COMPOST
+use("compost");
+box(1.2,0.9,1,mX+1,0.45,mZ-3.5,mat.compost);box(1.3,0.05,1.1,mX+1,0.92,mZ-3.5,mat.woodDk);
+// REGENTONNEN
+use("regenton");
+for(let i=0;i<3;i++){const z=1.5+i*3;const b=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.4,0.9,16),mat.barrel);b.position.set(HW+0.7,0.45,z);b.castShadow=true;add(b);const lid=new THREE.Mesh(new THREE.CylinderGeometry(0.36,0.36,0.04,16),new THREE.MeshStandardMaterial({color:0x2288aa,roughness:0.3}));lid.position.set(HW+0.7,0.92,z);add(lid);const p=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,TH+0.5,8),mat.pipe);p.position.set(HW+0.08,(TH+0.5)/2,z);add(p);box(0.5,0.07,0.07,HW+0.4,0.85,z,mat.pipe,false);}
+// OPLAADPUNT + auto
+use("oplaadpunt");
+box(0.25,1.4,0.15,-2.2,0.7,HD/2+1,mat.charger);box(0.2,0.3,0.12,-2.2,1.2,HD/2+1.08,new THREE.MeshBasicMaterial({color:0x00cc44}));box(0.4,0.08,0.3,-2.2,0.04,HD/2+1,mat.concrete,false);
+const cX=-3.2,cZ=HD/2+2.6;box(1.9,0.55,4.2,cX,0.55,cZ,new THREE.MeshStandardMaterial({color:0xe8eef2,roughness:0.3,metalness:0.5}));box(1.7,0.5,2.4,cX,1,cZ-0.2,new THREE.MeshPhysicalMaterial({color:0x223344,roughness:0.1,transparent:true,opacity:0.7}));[[-0.85,-1.3],[0.85,-1.3],[-0.85,1.3],[0.85,1.3]].forEach(w=>{const wh=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,0.25,16),new THREE.MeshStandardMaterial({color:0x222222,roughness:0.7}));wh.rotation.z=Math.PI/2;wh.position.set(cX+w[0],0.35,cZ+w[1]);add(wh);});
+box(1,0.04,0.04,-2.6,0.5,HD/2+1.4,mat.charger,false);
+// THUISBATTERIJ — 2× Tesla Powerwall tegen de westgevel, bij de auto/laadpaal
+use("batterij");
+const powerwalls=[];
+[7.9,8.62].forEach(function(z){
+  box(0.2,1.5,0.62,-0.18,0.95,z,new THREE.MeshStandardMaterial({color:0xf2f4f6,roughness:0.42}));      // body
+  box(0.04,0.46,0.42,-0.30,1.34,z,new THREE.MeshStandardMaterial({color:0x161b22,roughness:0.3}));     // schermpaneel
+  box(0.05,1.02,0.17,-0.305,0.79,z,new THREE.MeshStandardMaterial({color:0x0c2a16,roughness:0.6}),false); // laad-track
+  const fillM=new THREE.MeshStandardMaterial({color:0x3ad36a,emissive:0x22a64a,emissiveIntensity:0.85,roughness:0.4});
+  const fill=new THREE.Mesh(new THREE.BoxGeometry(0.06,1.0,0.14),fillM);
+  fill.position.set(-0.31,0.79,z);fill.userData.bot=0.29;fill.userData.m=fillM;add(fill);
+  powerwalls.push(fill);
+});
+// BOMEN
+use("bomen");
+function tree(x,z,s){if(s===undefined)s=1;const tH=3*s;const t=new THREE.Mesh(new THREE.CylinderGeometry(0.12*s,0.22*s,tH,8),mat.trunk);t.position.set(x,tH/2,z);t.castShadow=true;add(t);for(let l=0;l<4;l++){const r=(1.8-l*0.3)*s;const fm=new THREE.Mesh(new THREE.SphereGeometry(r,8,7),l%2===0?mat.foliage:mat.foliageL);fm.position.set(x+(Math.random()-0.5)*0.4*s,tH+l*0.5*s+0.3,z+(Math.random()-0.5)*0.4*s);fm.castShadow=true;add(fm);}}
+[[-4,-4,1.2],[-5,6,1],[-3,14,.9],[0,-6,.8],[HW+8,-3,1.1],[HW+9,10,.95],[HW+7,15,.85],[-5,20,.75],[20,-5,1.15],[24,10,.8],[12,-6,.9],[-3,-10,.7],[22,16,.7],[HW+11,4,.85],[5,-7,1]].forEach(a=>tree(a[0],a[1],a[2]));
+function bush(x,z){for(let i=0;i<3;i++){const r=(0.4+Math.random()*0.3)*0.5;const b=new THREE.Mesh(new THREE.SphereGeometry(r,6,5),i%2===0?mat.foliage:mat.foliageL);b.position.set(x+(Math.random()-0.5)*0.3,r*0.7,z+(Math.random()-0.5)*0.3);b.castShadow=true;add(b);}}
+[[-0.9,1.5],[-0.9,4],[-0.9,7],[0.5,HD+1.5],[3,HD+1.2],[12,HD+1.2],[14.6,HD+1.5]].forEach(a=>bush(a[0],a[1]));
+
+// ============================================================
+// INTERIEUR (simpel & duurzaam: licht hout, linnen, planten)
+// ============================================================
+const interiorG=new THREE.Group();root.add(interiorG);
+const fm={
+  oak:new THREE.MeshStandardMaterial({color:0xc9a978,roughness:0.6}),
+  oakD:new THREE.MeshStandardMaterial({color:0x9c7a4f,roughness:0.6}),
+  beige:new THREE.MeshStandardMaterial({color:0xd8cfbf,roughness:0.85}),
+  sage:new THREE.MeshStandardMaterial({color:0x7d9b6a,roughness:0.85}),
+  grey:new THREE.MeshStandardMaterial({color:0xb7b3a8,roughness:0.85}),
+  linen:new THREE.MeshStandardMaterial({color:0xeae3d6,roughness:0.9}),
+  white:new THREE.MeshStandardMaterial({color:0xeeeae0,roughness:0.7}),
+  dark:new THREE.MeshStandardMaterial({color:0x33312e,roughness:0.5}),
+  terra:new THREE.MeshStandardMaterial({color:0xb5704a,roughness:0.8}),
+  rugG:new THREE.MeshStandardMaterial({color:0x8a9b7a,roughness:0.95}),
+  rugB:new THREE.MeshStandardMaterial({color:0xcdbfa6,roughness:0.95}),
+  steel:new THREE.MeshStandardMaterial({color:0x9a9a9a,roughness:0.3,metalness:0.6}),
+};
+const fleaf=new THREE.MeshLambertMaterial({color:0x3d8e30}),fleafD=new THREE.MeshLambertMaterial({color:0x2d6e20});
+cur=interiorG;
+function grp(x,y,z,rot){const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rot||0;interiorG.add(g);return g;}
+function gb(g,w,h,d,x,y,z,m){const e=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);e.position.set(x,y,z);e.castShadow=true;e.receiveShadow=true;g.add(e);return e;}
+function fplant(x,y,z,s){s=s||1;const pot=new THREE.Mesh(new THREE.CylinderGeometry(0.16*s,0.12*s,0.3*s,12),fm.terra);pot.position.set(x,y+0.15*s,z);pot.castShadow=true;add(pot);for(let i=0;i<3;i++){const r=(0.24-i*0.04)*s;const lf=new THREE.Mesh(new THREE.SphereGeometry(r,7,6),i%2?fleaf:fleafD);lf.position.set(x+(Math.random()-0.5)*0.12,y+0.34*s+i*0.16*s,z+(Math.random()-0.5)*0.12);lf.castShadow=true;add(lf);}}
+function frug(x,y,z,w,d,m){const e=new THREE.Mesh(new THREE.BoxGeometry(w,0.02,d),m);e.position.set(x,y+0.011,z);e.receiveShadow=true;add(e);}
+function fsofa(x,y,z,w,rot,m){const g=grp(x,y,z,rot);gb(g,w,0.32,0.9,0,0.28,0,fm.oakD);gb(g,w,0.5,0.18,0,0.55,-0.36,m);gb(g,0.18,0.42,0.9,-w/2+0.09,0.5,0,m);gb(g,0.18,0.42,0.9,w/2-0.09,0.5,0,m);const n=Math.max(2,Math.round(w/0.7));for(let i=0;i<n;i++){gb(g,w/n-0.06,0.16,0.66,-w/2+w/(2*n)+i*w/n,0.52,0.05,fm.beige);gb(g,w/n-0.08,0.26,0.12,-w/2+w/(2*n)+i*w/n,0.66,-0.28,fm.linen);}}
+function ftable(x,y,z,w,d,h,m){const g=grp(x,y,z,0);gb(g,w,0.06,d,0,h,0,m);[[-w/2+0.1,-d/2+0.1],[w/2-0.1,-d/2+0.1],[-w/2+0.1,d/2-0.1],[w/2-0.1,d/2-0.1]].forEach(p=>gb(g,0.07,h,0.07,p[0],h/2,p[1],fm.oakD));}
+function fchair(x,y,z,rot,m){const g=grp(x,y,z,rot);gb(g,0.44,0.05,0.44,0,0.46,0,m);gb(g,0.44,0.5,0.05,0,0.72,-0.19,m);[[-0.18,-0.18],[0.18,-0.18],[-0.18,0.18],[0.18,0.18]].forEach(p=>gb(g,0.05,0.46,0.05,p[0],0.23,p[1],fm.oakD));}
+function fbed(x,y,z,w,d,rot){const g=grp(x,y,z,rot);gb(g,w,0.3,d,0,0.2,0,fm.oakD);gb(g,w-0.1,0.18,d-0.1,0,0.42,0,fm.linen);gb(g,w,0.7,0.12,0,0.55,-d/2+0.06,fm.oak);gb(g,w-0.2,0.12,d*0.5,0,0.52,d*0.2,fm.sage);for(const px of [-w/4,w/4])gb(g,w*0.34,0.12,0.34,px,0.52,-d/2+0.36,fm.white);}
+function fward(x,y,z,w,rot){const g=grp(x,y,z,rot);gb(g,w,2.0,0.55,0,1.0,0,fm.oak);gb(g,0.03,1.7,0.02,-0.05,1.0,0.28,fm.dark);gb(g,0.03,1.7,0.02,0.05,1.0,0.28,fm.dark);}
+function fshelf(x,y,z,w,rot){const g=grp(x,y,z,rot);gb(g,w,1.8,0.3,0,0.9,0,fm.oak);const cs=[0x8a9b7a,0xb5704a,0xd8cfbf,0x33312e,0x7d9b6a];const nb=Math.floor(w/0.13);for(let s=0;s<4;s++)for(let b=0;b<nb;b++){const bk=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.2,0.18),new THREE.MeshStandardMaterial({color:cs[(s+b)%5],roughness:0.85}));bk.position.set(-w/2+0.15+b*0.13,0.35+s*0.42,0.04);g.add(bk);}}
+function fkitchen(x,y,z,w,rot){const g=grp(x,y,z,rot);gb(g,w,0.9,0.6,0,0.45,0,fm.white);gb(g,w+0.04,0.06,0.66,0,0.92,0,fm.oakD);gb(g,w,0.5,0.32,0,1.85,-0.02,fm.oak);}
+function fdesk(x,y,z,rot){const g=grp(x,y,z,rot);gb(g,1.4,0.05,0.6,0,0.75,0,fm.oak);[[-0.6,0],[0.6,0]].forEach(p=>gb(g,0.05,0.75,0.55,p[0],0.375,p[1],fm.oakD));gb(g,0.55,0.34,0.03,0,0.97,-0.24,fm.dark);gb(g,0.16,0.04,0.12,0,0.78,-0.24,fm.dark);}
+function flamp(x,y,z){const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,1.5,8),fm.steel);pole.position.set(x,y+0.75,z);pole.castShadow=true;add(pole);const sh=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.24,0.26,14,1,true),fm.linen);sh.position.set(x,y+1.55,z);add(sh);}
+
+const G0=0.12,G1=3.075;
+// BEGANE GROND
+frug(3,G0,5.6,4.4,3.4,fm.rugG);
+fsofa(3,G0,4.1,3.2,0,fm.grey);
+ftable(3,G0,5.7,1.3,0.7,0.4,fm.oak);
+fchair(6.2,G0,5.2,-1.3,fm.sage);
+fshelf(0.55,G0,6.2,3,Math.PI/2);
+flamp(8.2,G0,4.2);fplant(8.2,G0,8,1.2);fplant(0.8,G0,3.7,0.9);
+fkitchen(12.3,G0,8.3,4.6,0);
+gb(grp(11.7,G0,5.4,0),2.6,0.9,1.05,0,0.45,0,fm.white);gb(grp(11.7,G0,5.4,0),2.7,0.06,1.15,0,0.92,0,fm.oakD);
+ftable(11.6,G0,3.5,1.6,0.9,0.74,fm.oak);
+fchair(10.7,G0,3.5,Math.PI/2,fm.beige);fchair(12.5,G0,3.5,-Math.PI/2,fm.beige);fchair(11.6,G0,2.9,0,fm.beige);fchair(11.6,G0,4.1,Math.PI,fm.beige);
+fplant(14.2,G0,8,1);
+gb(grp(7.5,G0,1.1,0),1.3,0.45,0.4,0,0.22,0,fm.oak);fplant(6.4,G0,0.7,0.8);
+gb(grp(1.2,G0,2.1,0),1.7,0.5,0.7,0,0.27,0,fm.white);gb(grp(2.9,G0,0.6,0),1.0,0.85,0.5,0,0.42,0,fm.white);
+gb(grp(4.8,G0,1,0),0.7,1.3,0.45,0,0.65,0,fm.steel);gb(grp(4.8,G0,2.2,0),0.8,1.1,0.4,0,0.55,0,fm.white);
+// 1e VERDIEPING
+frug(3.5,G1,6.6,3.2,2.6,fm.rugB);
+fbed(3.6,G1,7.3,2.2,2.3,Math.PI);
+gb(grp(2.0,G1,8.4,0),0.5,0.45,0.4,0,0.22,0,fm.oak);gb(grp(5.2,G1,8.4,0),0.5,0.45,0.4,0,0.22,0,fm.oak);
+fward(0.7,G1,6,2.2,Math.PI/2);fplant(7,G1,5.2,1);
+gb(grp(8.4,G1,8.3,0),1.3,0.85,0.5,0,0.42,0,fm.white);
+frug(12.6,G1,6.8,2.6,2.2,fm.rugB);
+fbed(12.7,G1,7.4,1.7,2.2,Math.PI);
+gb(grp(11.4,G1,8.3,0),0.5,0.45,0.4,0,0.22,0,fm.oak);fplant(14.2,G1,5.2,0.9);
+fdesk(3,G1,1.1,0);fchair(3,G1,1.9,Math.PI,fm.sage);fshelf(0.55,G1,2.6,2.6,Math.PI/2);
+fchair(5.6,G1,3.6,-0.8,fm.grey);fplant(6,G1,4,1);
+gb(grp(12.5,G1,1.1,0),1.7,0.5,0.7,0,0.27,0,fm.white);gb(grp(13.9,G1,3.4,0),1.2,0.85,0.5,0,0.42,0,fm.white);
+fplant(8.2,G1,5.4,1);
+cur=staticG;
+
+
+// ============================================================
+// HIGHLIGHT + SELECTIE
+// ============================================================
+let boxHelper=null,selected=null;
+function clearHL(){if(boxHelper){scene.remove(boxHelper);boxHelper.geometry.dispose();boxHelper=null;}selected=null;}
+function highlight(g){
+  clearHL();selected=g;
+  boxHelper=new THREE.BoxHelper(g,0x5BD06A);
+  boxHelper.material.depthTest=false;boxHelper.material.transparent=true;boxHelper.material.linewidth=2;boxHelper.renderOrder=999;
+  scene.add(boxHelper);
+}
+function focusOn(g){
+  const bb=new THREE.Box3().setFromObject(g);const c=bb.getCenter(new THREE.Vector3());const sz=bb.getSize(new THREE.Vector3());
+  const rad=Math.max(sz.x,sz.y,sz.z);
+  goal.tgt.copy(c);goal.r=Math.min(45,Math.max(7,rad*2.4+3));
+}
+function selectPart(k){
+  if(!INFO[k])return;
+  highlight(groups[k]);focusOn(groups[k]);autoR=false;
+  const d=INFO[k];
+  document.getElementById("p-cat").textContent=d.cat;
+  document.getElementById("p-name").textContent=d.name;
+  document.getElementById("p-mat").textContent=d.mat;
+  document.getElementById("p-dim").textContent=d.dim;
+  document.getElementById("p-sus").textContent=d.sus;
+  const _sec=sectionSVG(k),_sr=document.getElementById("p-section-row");
+  if(_sec){document.getElementById("p-section").innerHTML=_sec;_sr.style.display="block";}else{_sr.style.display="none";}
+  document.getElementById("panel").classList.add("open");
+}
+function closePanel(){document.getElementById("panel").classList.remove("open");clearHL();}
+function resetView(){closePanel();goal.tgt.set(HW/2,2.5,HD/2);goal.r=28;autoR=true;}
+window.closePanel=closePanel;window.resetView=resetView;
+// --- Interieur tonen (dak weg + muren doorzichtig) ---
+const shellMats=[mat.wallExt,mat.reveal,mat.wallTrim,mat.woodClad,mat.parapet];
+let interiorOn=false;
+function setInterior(on){
+  groups.sedum.visible=!on; groups.panelen.visible=!on; groups.lift.visible=!on;
+  shellMats.forEach(m=>{m.transparent=on; m.opacity=on?0.14:1; m.depthWrite=!on; m.needsUpdate=true;});
+}
+function toggleInterior(){interiorOn=!interiorOn;setInterior(interiorOn);
+  const b=document.getElementById("interiorBtn");
+  b.textContent=interiorOn?"Interieur verbergen":"Interieur tonen";
+  b.classList.toggle("active",interiorOn);}
+window.toggleInterior=toggleInterior;
+// ============================================================
+// EXTRA: dag/nacht · constructie · warmteverlies · scenario
+// ============================================================
+let explodeT=0,explodeGoal=0,dayCur=1,dayGoal=1,heatOn=false,explodeState=false;
+const nightLights=[];
+function addPL(color,maxI,dist,x,y,z){const l=new THREE.PointLight(color,0,dist,2);l.position.set(x,y,z);l.userData.maxI=maxI;scene.add(l);nightLights.push(l);}
+addPL(0xffd9a0,0.9,9,3,1.7,5);addPL(0xffd9a0,0.9,9,12,1.7,6);
+addPL(0xffd9a0,0.8,9,3.6,4.5,7);addPL(0xffd9a0,0.7,8,12.7,4.5,7);
+addPL(0xffd9a0,0.7,8,3,4.5,1.8);addPL(0x66ff99,1.3,5,-2.2,1.2,HD/2+1);
+addPL(0xffe2b0,0.5,6,7.5,0.9,-3);
+const gardenBulbs=[];
+function gLight(x,z){const post=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.045,0.7,8),mat.steel);post.position.set(x,0.35,z);staticG.add(post);const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.09,10,10),new THREE.MeshStandardMaterial({color:0xfff1c0,emissive:0xfff1c0,emissiveIntensity:0}));bulb.position.set(x,0.72,z);staticG.add(bulb);gardenBulbs.push(bulb);}
+[[5.2,-1.2],[9.8,-1.2],[5.2,-3.4],[9.8,-3.4],[2,3],[2,7],[HW+2.5,HD/2]].forEach(p=>gLight(p[0],p[1]));
+function makeLabel(txt,sub){const H=sub?96:64;const c=document.createElement('canvas');c.width=340;c.height=H;const x=c.getContext('2d');
+  x.fillStyle='rgba(13,22,16,0.92)';x.fillRect(0,0,340,H);x.strokeStyle='#4CC65C';x.lineWidth=3;x.strokeRect(2,2,336,H-4);
+  x.fillStyle='#eaffea';x.font='bold 28px Helvetica, Arial';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,170,sub?32:H/2);
+  if(sub){x.fillStyle='#bfe6c8';x.font='600 21px Helvetica, Arial';x.fillText(sub,170,70);}
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));
+  sp.scale.set(4.0,4.0*H/340,1);sp.visible=false;sp.renderOrder=998;scene.add(sp);return sp;}
+const lblPanel=makeLabel("Zonnepanelen","21 panelen · 9,24 kWp");
+const lblSedum=makeLabel("Sedumdak","groen dak — koelt + buffert");
+const lblPUR  =makeLabel("PUR-isolatie","dak 15 cm · λ 0,022");
+const lblHout =makeLabel("Houten dakplaat","15 cm · U-dak 0,12");
+const lblWall =makeLabel("Houtskelet + PUR","15 cm hout + 10 cm PUR · U 0,17");
+const lblGlass=makeLabel("HR++ glas","dubbel + argon · U 1,20");
+const lblMuur =makeLabel("Doorsnede buitenmuur","U = 0,17 W/m²·K");
+const explodeLabels=[lblPanel,lblSedum,lblPUR,lblHout,lblWall,lblGlass,lblMuur];
+// --- losse constructielagen, alleen zichtbaar bij 'Bekijk constructie' ---
+const dakLagen=new THREE.Group();dakLagen.visible=false;root.add(dakLagen);
+const dakPUR=new THREE.Mesh(new THREE.BoxGeometry(HW-0.3,0.16,HD-0.3),new THREE.MeshStandardMaterial({color:0xf0e3a8,roughness:0.85}));
+const dakHout=new THREE.Mesh(new THREE.BoxGeometry(HW-0.3,0.16,HD-0.3),new THREE.MeshStandardMaterial({color:0xc69a63,roughness:0.8}));
+dakPUR.position.set(HW/2,TH,HD/2);dakHout.position.set(HW/2,TH,HD/2);dakLagen.add(dakPUR,dakHout);
+const muurLagen=new THREE.Group();muurLagen.visible=false;root.add(muurLagen);
+const mlX=HW+5.5,mlY=3.4,mlZ=HD/2;
+const ml_hout=new THREE.Mesh(new THREE.BoxGeometry(0.5,2.4,2.4),new THREE.MeshStandardMaterial({color:0xc69a63,roughness:0.8}));
+const ml_pur =new THREE.Mesh(new THREE.BoxGeometry(0.34,2.4,2.4),new THREE.MeshStandardMaterial({color:0xf0e3a8,roughness:0.85}));
+const ml_bin =new THREE.Mesh(new THREE.BoxGeometry(0.16,2.4,2.4),new THREE.MeshStandardMaterial({color:0xefe7d6,roughness:0.7}));
+muurLagen.add(ml_hout,ml_pur,ml_bin);
+function applyExplode(t){
+  groups.sedum.position.y=t*4.4;groups.panelen.position.y=t*6.6;groups.lift.position.y=t*4.4;
+  const s=1+t*0.16,ox=(HW/2)*(1-s),oz=(HD/2)*(1-s);
+  [groups.muur,groups.ramen,groups.deur].forEach(g=>{g.scale.set(s,1,s);g.position.set(ox,0,oz);});
+  dakLagen.visible=t>0.02; dakHout.position.y=TH+0.1+t*1.5; dakPUR.position.y=TH+0.1+t*2.9;
+  muurLagen.visible=t>0.02;
+  ml_hout.position.set(mlX-t*0.95,mlY,mlZ); ml_pur.position.set(mlX+t*0.12,mlY,mlZ); ml_bin.position.set(mlX+t*0.9,mlY,mlZ);
+  lblPanel.position.set(HW/2,TH+0.5+t*6.6+1.1,HD/2);
+  lblSedum.position.set(HW/2-3.4,TH+0.3+t*4.4+0.5,HD/2);
+  lblPUR.position.set(HW/2+3.6,TH+0.1+t*2.9,HD/2);
+  lblHout.position.set(HW/2-3.6,TH+0.1+t*1.5,HD/2);
+  lblWall.position.set(HW/2,FH+0.3,HD+1.6+t*1.4);
+  lblGlass.position.set(-2.4-t*1.2,FH+0.2,HD/2);
+  lblMuur.position.set(mlX,mlY+1.9,mlZ);
+  for(const l of explodeLabels)l.visible=t>0.05;
+}
+function toggleExploded(){explodeState=!explodeState;explodeGoal=explodeState?1:0;document.getElementById("explodeBtn").classList.toggle("active",explodeState);}
+window.toggleExploded=toggleExploded;
+// 'nacht' is nu een zachte, warme schemering — geen sombere donkere tinten meer
+const cDayTop=new THREE.Color(0x5fa0e0),cNightTop=new THREE.Color(0x2c4a86);
+const cDayBot=new THREE.Color(0xdcecdc),cNightBot=new THREE.Color(0x7d7fa6);
+const cSunDay=new THREE.Color(0xfff8ee),cSunNight=new THREE.Color(0x9aa0c8);
+const cFogDay=new THREE.Color(0xd6ead6),cFogNight=new THREE.Color(0xa9b6cc);
+function applyDaylight(f){
+  skyM.uniforms.top.value.copy(cNightTop).lerp(cDayTop,f);
+  skyM.uniforms.bot.value.copy(cNightBot).lerp(cDayBot,f);
+  sun.intensity=0.55+1.05*f; sun.color.copy(cSunNight).lerp(cSunDay,f);
+  amb.intensity=0.42+0.26*f; fl.intensity=0.16+0.18*f;
+  scene.fog.color.copy(cFogNight).lerp(cFogDay,f);
+  const night=1-f;
+  if(!heatColorsActive){mat.glass.emissive.setHex(0xffcc77);mat.glass.emissiveIntensity=night*0.8;mat.glass.opacity=0.32+night*0.22;}
+  for(const l of nightLights)l.intensity=l.userData.maxI*night*0.9;
+  for(const b of gardenBulbs)b.material.emissiveIntensity=night;
+}
+// ============================================================
+// WARMTEVERLIES — duidelijke kleuren waar veel warmte weglekt
+// ============================================================
+const heatMats=[[mat.wallExt,0xff7a22,0.55],[mat.roof,0x33cc55,0.45],[mat.sedum,0x33cc55,0.42],[mat.sedumB,0x33cc55,0.42],[mat.sedumC,0x33cc55,0.42],[mat.glass,0xff1606,1.0],[mat.door,0xffc23a,0.7],[mat.parapet,0xff8a3a,0.5]];
+let heatColorsActive=false,leakWanted=false;
+function setHeatColors(on){heatColorsActive=on;
+  heatMats.forEach(function(a){a[0].emissive.setHex(on?a[1]:0x000000);a[0].emissiveIntensity=on?a[2]:0;a[0].needsUpdate=true;});
+  if(on){mat.glass.opacity=0.55;}
+}
+function refreshHeat(){
+  const colors = heatOn || (seasonOn && season==='winter');
+  setHeatColors(colors); leakWanted=colors;
+}
+function setHeatmap(on){heatOn=on;
+  if(on){dayGoal=1;}
+  const b=document.getElementById("heatBtn");if(b)b.classList.toggle("active",on);
+  const c=document.getElementById("heatCap");if(c)c.style.display=on?"block":"none";
+  refreshHeat();
+}
+function toggleHeatmap(){setHeatmap(!heatOn);}
+window.toggleHeatmap=toggleHeatmap;
+// ============================================================
+// WARMTE-DEELTJES — warmte die zichtbaar uit het huis ontsnapt
+// ============================================================
+function softTex(){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(0.4,'rgba(255,255,255,0.55)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);}
+const heatTex=softTex();
+const leakGroup=new THREE.Group();scene.add(leakGroup);
+let totLeakP=0;leakSpots.forEach(function(s){totLeakP+=s.pow;});
+function pickSpot(){let r=Math.random()*totLeakP;for(const s of leakSpots){r-=s.pow;if(r<=0)return s;}return leakSpots[leakSpots.length-1];}
+function leakColor(type){return type==='raam'?0xff3320:type==='deur'?0xffae3a:type==='muur'?0xffb347:0x7fe06a;}
+const leakParts=[];
+for(let i=0;i<130;i++){const m=new THREE.SpriteMaterial({map:heatTex,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending});const sp=new THREE.Sprite(m);sp.renderOrder=997;leakGroup.add(sp);leakParts.push({sp:sp,m:m,spot:pickSpot(),t:Math.random(),r:Math.random()});}
+let leakLevel=0;
+function updateLeak(dt){
+  leakLevel += ((leakWanted?1:0)-leakLevel)*Math.min(1,dt*3);
+  leakGroup.visible = leakLevel>0.01;
+  if(!leakGroup.visible)return;
+  for(const p of leakParts){
+    p.t += dt*(0.32+0.26*p.r);
+    if(p.t>=1){p.t-=1;p.spot=pickSpot();}
+    const s=p.spot,t=p.t;
+    const swing=Math.sin((p.r+t)*11.0)*0.13;
+    p.sp.position.set(
+      s.x + s.nx*(0.15+t*1.15) + (s.nx?0:swing),
+      s.y + t*1.7 + 0.18*Math.sin(t*6+p.r*6),
+      s.z + s.nz*(0.15+t*1.15) + (s.nz?0:swing));
+    const sc=0.22+t*0.7; p.sp.scale.set(sc,sc,1);
+    p.m.color.setHex(leakColor(s.type));
+    p.m.opacity = leakLevel*Math.sin(Math.PI*t)*(s.type==='dak'?0.30:0.85);
+  }
+}
+// ============================================================
+// THUISBATTERIJ — laadniveau-animatie + chip
+// ============================================================
+let batCharge=1,batGoal=1,scenarioOpen=false;
+function updateBattery(dt){
+  batCharge += (batGoal-batCharge)*Math.min(1,dt*1.4);
+  const c=Math.max(0.04,batCharge);
+  for(const f of powerwalls){f.scale.y=c;f.position.y=f.userData.bot+0.5*c;f.userData.m.emissiveIntensity=0.45+0.55*c;f.userData.m.color.setHex(batCharge>0.35?0x3ad36a:0xffb74d);}
+  const txt=document.getElementById('bcTxt');if(txt)txt.textContent='Batterij '+Math.round(batCharge*100)+'%';
+}
+function updateBatChip(){const el=document.getElementById('batChip');if(el)el.classList.toggle('show',seasonOn||scenarioOpen);}
+// ============================================================
+// SEIZOENSMODUS — winter ↔ zomer, voel het warmteverschil
+// ============================================================
+let seasonOn=false,season='zomer';
+function tempFill(tC){return Math.round(Math.max(0,Math.min(1,(tC+15)/50))*100);}
+function tempCol(tC){return tC<=0?'#7fd0ff':tC<12?'#9be0c0':tC<24?'#ffd24d':'#ff7a3a';}
+function setSeason(s){season=s;
+  document.getElementById('seSummer').classList.toggle('active',s==='zomer');
+  document.getElementById('seWinter').classList.toggle('active',s==='winter');
+  const inT=21,outT=(s==='zomer')?28:-10,dT=inT-outT;
+  document.getElementById('thInV').textContent=inT+'°';
+  document.getElementById('thOutV').textContent=outT+'°';
+  document.getElementById('thIn').style.height=tempFill(inT)+'%';
+  document.getElementById('thOut').style.height=tempFill(outT)+'%';
+  document.getElementById('thIn').style.background=tempCol(inT);
+  document.getElementById('thOut').style.background=tempCol(outT);
+  document.getElementById('thDelta').textContent='ΔT '+Math.abs(dT)+'°';
+  if(s==='winter'){
+    const kW=(155.4*dT/1000).toFixed(1).replace('.',',');
+    document.getElementById('seCap').innerHTML='Binnen 21°, buiten −10°. De warmte stroomt vooral via de <b style="color:#ff7a5a">ramen</b> naar buiten — <b>155,4 W/K × '+dT+'° ≈ '+kW+' kW</b>. De warmtepomp vult dit precies aan.';
+    dayGoal=0.82;sun.position.set(-13,9,7);batGoal=0.5;
+  }else{
+    document.getElementById('seCap').innerHTML='Binnen een aangename 21°, buiten een warme 28°. Het <b style="color:#7fe0a0">sedumdak</b> en de dikke isolatie houden de hitte buiten; de panelen draaien op vol vermogen.';
+    dayGoal=1;sun.position.set(2,32,5);batGoal=1;
+  }
+  refreshHeat();
+}
+window.setSeason=setSeason;
+function toggleSeason(){seasonOn=!seasonOn;
+  const p=document.getElementById('season'),b=document.getElementById('seasonBtn');
+  b.classList.toggle('active',seasonOn);
+  if(seasonOn){closeScenario();setHeatmap(false);p.classList.add('open');setSeason(season);}
+  else{p.classList.remove('open');dayGoal=1;sun.position.set(18,28,12);batGoal=1;refreshHeat();}
+  updateBatChip();
+}
+function closeSeason(){if(seasonOn)toggleSeason();}
+window.toggleSeason=toggleSeason;window.closeSeason=closeSeason;
+function sectionSVG(key){
+  const D={
+    muur:{h:"Buitenmuur · U = 0,17 W/m²·K",rows:[["#c8a978","Hout 0,15 m (\u03bb 0,13)"],["#e7dca0","PUR-schuim 0,10 m (\u03bb 0,022)"],["#efe7d6","Binnenafwerking"]]},
+    sedum:{h:"Dak · U = 0,12 W/m²·K",rows:[["#5da04a","Sedum / groen dak"],["#e7dca0","PUR-schuim 0,15 m (\u03bb 0,022)"],["#c8a978","Hout 0,15 m (\u03bb 0,13)"]]},
+    ramen:{h:"Raam · HR++ · U = 1,20 W/m²·K",rows:[["#bfe0ee","Glas"],["#eef7fb","Argon-vulling"],["#bfe0ee","Glas"]]}
+  }[key];
+  if(!D)return "";
+  let s='<div class="sec"><div class="sec-h">'+D.h+'</div>';
+  D.rows.forEach(function(r){s+='<div class="sec-row"><span class="sw" style="background:'+r[0]+'"></span>'+r[1]+'</div>';});
+  return s+'</div>';
+}
+const SCEN=[
+ {t:"08:00",day:1.0,sun:[18,20,12],part:"panelen",bat:0.35,cap:"De zon komt op en de zonnepanelen beginnen stroom te maken. De thuisbatterij begint op te laden."},
+ {t:"10:00",day:1.0,sun:[8,26,8],part:"regenton",bat:0.62,cap:"Het heeft geregend; het water wordt opgevangen in de regentonnen. De batterij vult verder op."},
+ {t:"14:00",day:1.0,sun:[-4,28,6],part:"moestuin",bat:0.96,cap:"Volle zon: de batterij zit bijna vol en de moestuin krijgt water uit de regenton."},
+ {t:"18:00",day:0.5,sun:[-16,8,4],part:"oplaadpunt",bat:0.8,cap:"'s Avonds laadt de elektrische auto op met de zonnestroom van overdag."},
+ {t:"22:00",day:0.28,sun:[-18,4,2],part:"batterij",bat:0.45,cap:"De zon is onder. Nu levert de thuisbatterij de opgeslagen stroom en gaat de tuinverlichting aan."}
+];
+function buildScenario(){const c=document.getElementById("scSteps");if(c.children.length)return;SCEN.forEach(function(st,i){const b=document.createElement("button");b.textContent=st.t;b.onclick=function(){setScenarioStep(i);};c.appendChild(b);});}
+function setScenarioStep(i){const st=SCEN[i];dayGoal=st.day;sun.position.set(st.sun[0],st.sun[1],st.sun[2]);batGoal=st.bat;
+  const btns=document.getElementById("scSteps").children;for(let j=0;j<btns.length;j++)btns[j].classList.toggle("active",j===i);
+  document.getElementById("scCap").textContent=st.cap;
+  if(st.part){selectPart(st.part);}else{clearHL();closePanel();goal.tgt.set(HW/2,2.6,HD/2);goal.r=32;autoR=false;}
+}
+function openScenario(){buildScenario();closeSeason();scenarioOpen=true;document.getElementById("scenario").classList.add("open");const b=document.getElementById("scenarioBtn");if(b)b.classList.add("active");updateBatChip();setScenarioStep(0);}
+function closeScenario(){const s=document.getElementById("scenario");if(s)s.classList.remove("open");const b=document.getElementById("scenarioBtn");if(b)b.classList.remove("active");scenarioOpen=false;dayGoal=1;sun.position.set(18,28,12);batGoal=1;updateBatChip();}
+window.openScenario=openScenario;window.closeScenario=closeScenario;
+
+
+
+// raycast
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let downXY=null;
+canvas.addEventListener("pointerdown",e=>{downXY={x:e.clientX,y:e.clientY};});
+canvas.addEventListener("pointerup",e=>{
+  if(!downXY)return;const moved=Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y);downXY=null;if(moved>6)return;
+  const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;
+  ray.setFromCamera(mouse,camera);
+  const hits=ray.intersectObject(root,true);
+  for(const h of hits){let o=h.object;while(o&&o.userData.partId===undefined)o=o.parent;if(o&&o.userData.partId){selectPart(o.userData.partId);return;}}
+});
+
+// ============================================================
+// CONTROLS + camera tween
+// ============================================================
+let drag=false,pM={x:0,y:0},sph={t:0.6,p:0.45,r:28},autoR=true;
+const tgt=new THREE.Vector3(HW/2,2.5,HD/2);
+const goal={tgt:new THREE.Vector3(HW/2,2.5,HD/2),r:28};
+function updCam(){sph.p=Math.max(0.08,Math.min(1.45,sph.p));sph.r=Math.max(6,Math.min(55,sph.r));
+  camera.position.set(tgt.x+sph.r*Math.sin(sph.p)*Math.cos(sph.t),tgt.y+sph.r*Math.cos(sph.p),tgt.z+sph.r*Math.sin(sph.p)*Math.sin(sph.t));camera.lookAt(tgt);}
+function gXY(e){return{x:e.clientX??e.touches?.[0]?.clientX??0,y:e.clientY??e.touches?.[0]?.clientY??0};}
+canvas.addEventListener("mousedown",e=>{drag=true;pM=gXY(e);});
+canvas.addEventListener("mousemove",e=>{if(!drag)return;const c=gXY(e);sph.t-=(c.x-pM.x)*0.007;sph.p-=(c.y-pM.y)*0.007;pM=c;});
+addEventListener("mouseup",()=>drag=false);
+canvas.addEventListener("wheel",e=>{goal.r=Math.max(6,Math.min(55,goal.r+e.deltaY*0.02));},{passive:true});
+canvas.addEventListener("touchstart",e=>{drag=true;pM=gXY(e);},{passive:true});
+canvas.addEventListener("touchmove",e=>{if(!drag)return;const c=gXY(e);sph.t-=(c.x-pM.x)*0.007;sph.p-=(c.y-pM.y)*0.007;pM=c;},{passive:true});
+addEventListener("touchend",()=>drag=false);
+
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+addEventListener("resize",resize);resize();
+
+let _last=performance.now();
+function anim(){requestAnimationFrame(anim);
+  const now=performance.now();let dt=(now-_last)/1000;_last=now;if(dt>0.1)dt=0.1;
+  if(autoR&&!drag)sph.t+=0.0012;
+  tgt.lerp(goal.tgt,0.08);sph.r+=(goal.r-sph.r)*0.08;
+  explodeT+=(explodeGoal-explodeT)*0.1; applyExplode(explodeT);
+  dayCur+=(dayGoal-dayCur)*0.06; applyDaylight(dayCur);
+  updateLeak(dt); updateBattery(dt);
+  updCam();if(boxHelper)boxHelper.update();renderer.render(scene,camera);}
+anim();
+
+// ============================================================
+// LEGENDA (klikbaar)
+// ============================================================
+const legendItems=[["panelen",mat.solar],["sedum",mat.sedum],["muur",mat.wallExt],["ramen",mat.glass],["batterij",new THREE.Color(0x3aa0ff)],["moestuin",mat.moestuin],["regenton",mat.barrel],["oplaadpunt",new THREE.Color(0x00cc44)],["lift",mat.lift]];
+const lg=document.getElementById("legend");
+legendItems.forEach(([k,m])=>{const d=INFO[k];const col="#"+(m.color||m).getHexString();const row=document.createElement("div");row.className="r";row.onclick=()=>{showTab('3d');selectPart(k);};
+  row.innerHTML=`<span class="d" style="background:${col}"></span>${d.name}`;lg.appendChild(row);});
+
+// ============================================================
+// 2D PLATTEGRONDEN (SVG, klikbaar)
+// ============================================================
+const SC=46, MX=74, MT=94, MB=54, MR=40;
+function rr(x,y,w,h,fill,stroke,rad){return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rad||6}" fill="${fill}" stroke="${stroke||'none'}" stroke-width="1.3"/>`;}
+function esc(t){return (""+t).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+function svgPlan(title,subtitle,rooms){
+  const W=15*SC+MX+MR, H=9*SC+MT+MB;
+  const px=function(x){return MX+x*SC;}, py=function(y){return MT+y*SC;};
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">`;
+  s+=`<defs><filter id="sh" x="-12%" y="-12%" width="124%" height="135%"><feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/></filter></defs>`;
+  s+=`<rect x="${MX-28}" y="${MT-60}" width="${15*SC+56}" height="${9*SC+98}" rx="14" fill="#f4efe3" filter="url(#sh)"/>`;
+  s+=`<text x="${MX-12}" y="${MT-34}" font-size="21" font-weight="800" fill="#2f2a22">${esc(title)}</text>`;
+  s+=`<text x="${MX-12}" y="${MT-14}" font-size="13" fill="#9a8f7b">${esc(subtitle)}</text>`;
+  const nx=MX+15*SC-6, ny=MT-30;
+  s+=`<line x1="${nx}" y1="${ny+18}" x2="${nx}" y2="${ny}" stroke="#7a6f5b" stroke-width="1.6"/><path d="M${nx-4} ${ny+5} L${nx} ${ny} L${nx+4} ${ny+5} Z" fill="#7a6f5b"/><text x="${nx}" y="${ny-4}" text-anchor="middle" font-size="11" font-weight="700" fill="#7a6f5b">N</text>`;
+  s+=`<rect x="${px(0)}" y="${py(0)}" width="${15*SC}" height="${9*SC}" fill="#efe7d6" stroke="#8c7a5e" stroke-width="2.5"/>`;
+  rooms.forEach(function(r){
+    const x=px(r.x), y=py(r.y), w=r.w*SC, h=r.h*SC;
+    s+=`<g class="room" onclick="selectRoom('${r.k}')">`;
+    s+=`<rect class="rfill" x="${x}" y="${y}" width="${w}" height="${h}" fill="${r.c}" stroke="#b9a98f" stroke-width="1.4" ${r.dash?'stroke-dasharray="6 4"':''}/>`;
+    (r.fr||[]).forEach(function(f){s+=rr(px(f[0]),py(f[1]),f[2]*SC,f[3]*SC,f[4]||'#fbf8f1','#cbbda3',f[5]||6);});
+    if(r.cross){s+=`<line x1="${x+6}" y1="${y+6}" x2="${x+w-6}" y2="${y+h-6}" stroke="#b9a98f" stroke-width="1.2"/><line x1="${x+w-6}" y1="${y+6}" x2="${x+6}" y2="${y+h-6}" stroke="#b9a98f" stroke-width="1.2"/>`;}
+    if(r.door){s+=`<path d="M${x+10} ${y+h-10} A 46 46 0 0 1 ${x+56} ${y+h-10}" fill="none" stroke="#7a6f5b" stroke-width="1.4"/><line x1="${x+10}" y1="${y+h-10}" x2="${x+10}" y2="${y+h-56}" stroke="#7a6f5b" stroke-width="2"/>`;}
+    if(r.doorEdge==='bottom'){const yy=y+h-2;s+=`<line x1="${x+8}" y1="${yy}" x2="${x+w-8}" y2="${yy}" stroke="#5a86b8" stroke-width="3"/>`;}
+    if(r.doorEdge==='top'){const yy=y+2;s+=`<line x1="${x+8}" y1="${yy}" x2="${x+w-8}" y2="${yy}" stroke="#5a86b8" stroke-width="3"/>`;}
+    const cx=x+w/2, cy=y+h/2;
+    s+=`<text class="rlabel" x="${cx}" y="${cy+(r.a?-3:5)}" text-anchor="middle">${esc(r.n)}</text>`;
+    if(r.a)s+=`<text class="rarea" x="${cx}" y="${cy+13}" text-anchor="middle">${esc(r.a)}</text>`;
+    s+=`</g>`;
+  });
+  const x0=px(0),x1=px(15),yb=py(9)+24;
+  s+=`<line x1="${x0}" y1="${yb}" x2="${x1}" y2="${yb}" stroke="#b9a98f" stroke-width="1"/><line x1="${x0}" y1="${yb-4}" x2="${x0}" y2="${yb+4}" stroke="#b9a98f"/><line x1="${x1}" y1="${yb-4}" x2="${x1}" y2="${yb+4}" stroke="#b9a98f"/>`;
+  s+=`<text x="${(x0+x1)/2}" y="${yb+15}" text-anchor="middle" font-size="12" fill="#8a7f6b">15,00 m</text>`;
+  const y0=py(0),y1b=py(9),xl=px(0)-22;
+  s+=`<line x1="${xl}" y1="${y0}" x2="${xl}" y2="${y1b}" stroke="#b9a98f" stroke-width="1"/><line x1="${xl-4}" y1="${y0}" x2="${xl+4}" y2="${y0}" stroke="#b9a98f"/><line x1="${xl-4}" y1="${y1b}" x2="${xl+4}" y2="${y1b}" stroke="#b9a98f"/>`;
+  s+=`<text x="${xl-6}" y="${(y0+y1b)/2}" text-anchor="middle" font-size="12" fill="#8a7f6b" transform="rotate(-90 ${xl-6} ${(y0+y1b)/2})">9,00 m</text>`;
+  s+=`</svg>`;return s;
+}
+const Cwarm="#efe7d6",Ctan="#e7ddc9",Cwet="#cfe0ea",Cgreen="#dde7d0",Cgarden="#d9e4cd";
+const bgRooms=[
+  {k:"terras",n:"Terras & tuin",a:"",x:0,y:0,w:15,h:0.5,c:Cgarden,doorEdge:"bottom"},
+  {k:"eethoek",n:"Eethoek",a:"15 m²",x:0,y:0.5,w:5,h:2.5,c:Cwarm,fr:[[1.0,1.0,1.6,1.1]]},
+  {k:"openkeuken",n:"Open keuken",a:"15 m² · domotica-scherm",x:0,y:3,w:5,h:2.4,c:Cwarm,fr:[[0.3,3.15,4.2,0.5,'#f1ebdd']]},
+  {k:"woonkamer",n:"Woonkamer",a:"60 m² · tuingericht",x:5,y:0.5,w:10,h:4.9,c:Cwarm,fr:[[8.0,0.9,5.0,0.7,'#fbf8f1'],[6.2,2.2,1.5,1.2,'#e3d9c4']]},
+  {k:"entree",n:"Entree / hal",a:"12 m²",x:0,y:5.4,w:3.2,h:3.6,c:Ctan,door:true},
+  {k:"lift",n:"Lift",a:"",x:3.2,y:5.4,w:1.5,h:1.8,c:Ctan,cross:true},
+  {k:"trap",n:"Trap",a:"",x:3.2,y:7.2,w:1.5,h:1.8,c:Ctan},
+  {k:"wc",n:"Wc",a:"",x:4.7,y:5.4,w:1.3,h:1.8,c:Cwet,fr:[[5.0,5.6,0.55,0.7]]},
+  {k:"gard",n:"Gard.",a:"",x:4.7,y:7.2,w:1.3,h:1.8,c:Ctan},
+  {k:"techniek",n:"Techniek",a:"2× Powerwall · WP-boiler",x:6.0,y:5.4,w:4.7,h:3.6,c:Ctan,fr:[[6.3,6.6,0.6,1.1,'#dfe6ea'],[7.1,6.6,0.6,1.1,'#dfe6ea']]},
+  {k:"bijkeuken",n:"Bijkeuken / berging",a:"",x:10.7,y:5.4,w:4.3,h:3.6,c:Ctan}
+];
+const v1Rooms=[
+  {k:"master",n:"Master slaapkamer",a:"42 m² · zithoek · tuinbalkon",x:0,y:0,w:5,h:5,c:Cwarm,doorEdge:"top",fr:[[0.8,1.0,2.2,1.7,'#fbf8f1']]},
+  {k:"logeer",n:"Logeer- / 2e slaapkamer",a:"24 m²",x:5,y:0,w:5,h:5,c:Cwarm,doorEdge:"top",fr:[[6.0,1.0,2.0,1.5,'#fbf8f1']]},
+  {k:"dakterras",n:"Dakterras",a:"24 m² · uitzicht tuin",x:10,y:0,w:5,h:5,c:Cgreen,dash:true},
+  {k:"werkkamer",n:"Werkkamer",a:"12 m²",x:0,y:5,w:3.2,h:4,c:Ctan,fr:[[0.4,5.4,1.8,0.6,'#fbf8f1']]},
+  {k:"overloop",n:"Overloop",a:"",x:3.2,y:5,w:1.8,h:4,c:Ctan,cross:true},
+  {k:"badkamer",n:"Badkamer",a:"12 m² · inloopdouche",x:5,y:5,w:5,h:4,c:Cwet,fr:[[8.0,5.8,1.5,1.2,'#fbf8f1']]},
+  {k:"inloopkast",n:"Inloopkast",a:"",x:10,y:5,w:5,h:4,c:Ctan}
+];
+const ROOMINFO={
+  terras:{cat:"Buiten",name:"Terras & tuin",mat:"Houten terras, groene tuin",dim:"aan de noord/tuinzijde",sus:"Groot terras met openslaande deuren naar de tuin. De onverharde tuin laat regenwater de grond in zakken."},
+  eethoek:{cat:"Begane grond",name:"Eethoek",mat:"Bamboe vloer",dim:"15 m²",sus:"Plek om met z'n allen te eten, naast de open keuken en met zicht op de tuin."},
+  openkeuken:{cat:"Begane grond",name:"Open keuken",mat:"Inductie · domotica-scherm",dim:"15 m²",sus:"Koken op stroom in plaats van gas. Op het schermpje zie je hoeveel zonnestroom er binnenkomt."},
+  woonkamer:{cat:"Begane grond",name:"Woonkamer",mat:"Bamboe vloer, grote ramen",dim:"60 m² · tuingericht",sus:"Ruime woonkamer aan de tuinzijde. Grote ramen geven veel daglicht, het goede glas houdt de warmte binnen."},
+  entree:{cat:"Begane grond",name:"Entree / hal",mat:"Brede voordeur (1,4 m)",dim:"12 m²",sus:"Ruime entree aan de straatkant, met een extra brede deur voor rollator of rolstoel."},
+  lift:{cat:"Comfort",name:"Lift",mat:"Personenlift",dim:"1,5 × 1,5 m",sus:"Brengt je naar de verdieping, ook als traplopen lastig wordt. Ruim genoeg voor een rolstoel."},
+  trap:{cat:"Begane grond",name:"Trap",mat:"Hout",dim:"naast de lift",sus:"De gewone trap naast de lift."},
+  wc:{cat:"Begane grond",name:"Wc",mat:"Tegels",dim:"klein toilet",sus:"Apart toilet op de begane grond, naast de entree."},
+  gard:{cat:"Begane grond",name:"Garderobe",mat:"Inbouwkasten",dim:"bij de entree",sus:"Bergruimte voor jassen en spullen bij de voordeur."},
+  techniek:{cat:"Begane grond",name:"Technische ruimte",mat:"2× Powerwall · warmtepompboiler",dim:"installaties",sus:"Hier staan de accu's, de warmtepomp en de boiler. Alles regelt zichzelf, daar heb je geen omkijken naar."},
+  bijkeuken:{cat:"Begane grond",name:"Bijkeuken / berging",mat:"Berging",dim:"aan de straatkant",sus:"Extra ruimte voor de wasmachine, voorraad en opslag."},
+  master:{cat:"1e verdieping",name:"Master slaapkamer",mat:"Bamboe vloer",dim:"42 m² · zithoek · tuinbalkon",sus:"Grote slaapkamer met een zithoek en een balkon aan de tuinzijde."},
+  logeer:{cat:"1e verdieping",name:"Logeer- / 2e slaapkamer",mat:"Bamboe vloer",dim:"24 m²",sus:"Ruime logeerkamer, ook geschikt als tweede slaapkamer."},
+  dakterras:{cat:"1e verdieping",name:"Dakterras",mat:"Houten vlonder",dim:"24 m² · uitzicht tuin",sus:"Een dakterras aan de tuinzijde met uitzicht over de groene tuin."},
+  werkkamer:{cat:"1e verdieping",name:"Werkkamer",mat:"Bamboe vloer",dim:"12 m²",sus:"Een rustige kamer om in te werken, te lezen of een hobby te doen."},
+  overloop:{cat:"1e verdieping",name:"Overloop",mat:"Bamboe vloer",dim:"bij de lift en trap",sus:"De ruimte boven aan de trap die de kamers met elkaar verbindt."},
+  badkamer:{cat:"1e verdieping",name:"Badkamer",mat:"Tegels · inloopdouche",dim:"12 m²",sus:"Ruime badkamer met een inloopdouche, makkelijk en veilig in gebruik."},
+  inloopkast:{cat:"1e verdieping",name:"Inloopkast",mat:"Kasten",dim:"naast de slaapkamers",sus:"Grote inloopkast voor kleding en opslag."}
+};
+function selectRoom(k){const d=ROOMINFO[k];if(!d)return;
+  document.getElementById("p-cat").textContent=d.cat;document.getElementById("p-name").textContent=d.name;
+  document.getElementById("p-mat").textContent=d.mat;document.getElementById("p-dim").textContent=d.dim;document.getElementById("p-sus").textContent=d.sus;
+  const sr=document.getElementById("p-section-row");if(sr)sr.style.display="none";
+  document.getElementById("panel").classList.add("open");}
+window.selectRoom=selectRoom;
+document.getElementById("plan-bg").innerHTML=svgPlan("BEGANE GROND · 135 m²","Tuinzijde (noord) boven · straat/entree (zuid) onder",bgRooms);
+document.getElementById("plan-v1").innerHTML=svgPlan("VERDIEPING · 135 m²","Slaapkamers en dakterras aan de tuinzijde",v1Rooms);
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(t){
+  document.getElementById("view-3d").classList.toggle("hidden",t!=="3d");
+  document.getElementById("view-bg").classList.toggle("hidden",t!=="bg");
+  document.getElementById("view-v1").classList.toggle("hidden",t!=="v1");
+  document.getElementById("t-3d").classList.toggle("active",t==="3d");
+  document.getElementById("t-bg").classList.toggle("active",t==="bg");
+  document.getElementById("t-v1").classList.toggle("active",t==="v1");
+  document.getElementById("legend").style.display=t==="3d"?"block":"none";
+  document.getElementById("toolbar").style.display=t==="3d"?"flex":"none";
+  if(t!=="3d"){closeScenario();closeSeason();if(heatOn)setHeatmap(false);document.getElementById("heatCap").style.display="none";}
+  if(t!=="3d")closePanel();
+  if(t==="3d")resize();
+}
+window.showTab=showTab;
+</script>
+</body>
+</html>
