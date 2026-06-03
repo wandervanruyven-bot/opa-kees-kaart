@@ -50,10 +50,14 @@ lug_h   = 13;                     // hoogte van de oogjes
 in_tip  = ir_o - 1;               // 53.5  tip binnenring-oog (as = X)
 out_tip = r_yoke - 1.5;           // 64.5  tip middenring-trunnion (as = Y)
 
-/* ---------------- ERGONOMISCH HANDVAT --------------------------- */
-grip_x  = or_y + 16;              // ~88
-grip_top_z = -6;
+/* ---------------- ERGONOMISCH HANDVAT (recht, splitsbaar) ------ */
+grip_r     = 14;                  // greepstraal (~28 mm dik)
+grip_x     = 76;                  // greep recht omlaag, vrij van de middenring
+grip_top_z = -7;                  // sluit aan op de onderkant van de beugel
 grip_bot_z = -100;
+peg_d2     = 8;                   // verbindingspen greep -> beugel
+peg_len2   = 10;
+peg_hole2  = 8.5;
 
 // =====================================================================
 //  HULPMODULES
@@ -128,37 +132,58 @@ module outer_ring() {
     }
 }
 
-// ---- Ergonomisch handvat met beugel ----------------------------
-module handle() {
+// ---- Handvat: BEUGEL (printt plat op de bed) -------------------
+module beugel() {
     difference() {
         union() {
-            // beugel: 180 graden hoepel over de +X helft (-Y .. +X .. +Y)
+            // 180 graden hoepel over de +X helft (-Y .. +X .. +Y)
             rotate([0,0,-90])
                 rotate_extrude(angle=180)
                     translate([r_yoke, -h_y/2]) square([wall_y, h_y]);
-            // ergonomische greep onder de +X kant van de beugel
-            grip();
+            // verbindingspad voor de greep (vlakke onderkant -> printbaar)
+            hull() {
+                translate([(r_yoke+or_y)/2, 0, 0])
+                    cube([wall_y, 16, h_y], center=true);
+                translate([grip_x, 0, 0]) cylinder(d=24, h=h_y, center=true);
+            }
         }
         // doorloopgaten op de Y-as (in de uiteinden van de beugel)
         thru_hole( 90, clr_d);
         thru_hole(270, clr_d);
+        // gat voor het pennetje van de greep
+        translate([grip_x, 0, -h_y/2 - 0.1]) cylinder(d=peg_hole2, h=peg_len2+1);
     }
 }
 
-// ergonomische greep: gebogen capsule met vingergroeven + duimsteun
-module grip() {
+// ---- Handvat: GREEP (rechte capsule, staat rechtop tijdens printen) ----
+//  solo=true  -> losse greep met vlakke bodem (printen)
+//  solo=false -> vast aan de beugel voor de weergaven
+module grip(solo=true) {
     difference() {
-        hull() {
-            translate([r_yoke+2, 0, 0])        sphere(8);
-            translate([grip_x,   0, grip_top_z]) sphere(14);
-            translate([grip_x+3, 0, grip_bot_z]) sphere(15);
+        union() {
+            hull() {
+                translate([grip_x, 0, grip_top_z-1])  cylinder(d=2*grip_r-6, h=2, center=true);
+                translate([grip_x, 0, grip_top_z-16]) sphere(grip_r);
+                translate([grip_x, 0, grip_bot_z+8])  sphere(grip_r);
+            }
+            // pennetje bovenop (steekt in de beugel)
+            translate([grip_x, 0, grip_top_z-0.1]) cylinder(d=peg_d2, h=peg_len2);
         }
+        // vlakke bodem: greep staat stabiel rechtop op de printplaat
+        if (solo)
+            translate([0, 0, grip_bot_z-300]) cube([600,600,600], center=true);
         // vingergroeven aan de buitenzijde
-        for (z = [-26, -45, -64, -83])
-            translate([grip_x + 16, 0, z]) sphere(6.5);
-        // duimsteun bovenaan, kant van de beker
-        translate([grip_x - 13, 0, -16]) scale([1,1,1.4]) sphere(8);
+        for (z = [grip_top_z-30, grip_top_z-48, grip_top_z-66, grip_top_z-84])
+            translate([grip_x + grip_r + 1.5, 0, z]) sphere(6.5);
+        // duimsteun aan de bekerzijde
+        translate([grip_x - grip_r - 0.5, 0, grip_top_z-20]) scale([1,1,1.5]) sphere(8.5);
     }
+}
+
+// ---- Handvat als één geheel (alleen voor de weergaven) ----------
+module handle() {
+    beugel();
+    grip(solo=false);
 }
 
 // =====================================================================
@@ -206,10 +231,14 @@ module product() {
 if (part == "inner")      inner_ring();
 else if (part == "outer") outer_ring();
 else if (part == "handle") handle();
+else if (part == "beugel") beugel();
+else if (part == "grip")   grip();
 else if (part == "plate") {
-    translate([-95, -65, h_i/2]) inner_ring();
-    translate([-95,  65, h_o/2]) outer_ring();
-    translate([ 95,   0, 0])     handle();
+    // alles in printstand: ringen rechtop, beugel plat, greep rechtop
+    translate([-105, -60, h_i/2]) inner_ring();
+    translate([-105,  60, h_o/2]) outer_ring();
+    translate([  70,  55, h_y/2]) beugel();
+    translate([  55, -60, -grip_bot_z]) grip();
 }
 else if (part == "product") product();
 else if (part == "exploded") {

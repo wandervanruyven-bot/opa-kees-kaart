@@ -49,7 +49,9 @@ bekerhouder-parkinson/
 │   ├── handvat.stl               ← V3: Handvat
 │   ├── gimbal_binnenring.stl     ← V4: Binnenring (bekerklem)
 │   ├── gimbal_middenring.stl     ← V4: Middenring (gimbalring)
-│   ├── gimbal_handvat.stl        ← V4: Ergonomisch handvat
+│   ├── gimbal_handvat_beugel.stl ← V4: Beugel (printt plat)
+│   ├── gimbal_handvat_greep.stl  ← V4: Greep (printt rechtop)
+│   ├── gimbal_handvat_1geheel.stl← V4: handvat als 1 geheel (alternatief)
 │   └── *_printplaat_compleet.stl ← alle delen in één bestand (per versie)
 ├── img/                          ← afbeeldingen voor het verslag
 ├── render.sh                     ← genereert V3 plaatjes + STL's
@@ -197,35 +199,54 @@ worden zo opgevangen.
 
 ### Printdelen (V4)
 
-| STL | Onderdeel |
-|---|---|
-| `gimbal_binnenring.stl` | Binnenring – klemt de beker, draaipunten op de X-as |
-| `gimbal_middenring.stl` | Middenring – de gimbalring, draaipunten op beide assen |
-| `gimbal_handvat.stl` | Ergonomisch handvat met beugel |
+Het handvat is **in twee delen gesplitst zodat alles makkelijk en zonder lastige
+support print**:
+
+| STL | Onderdeel | Printstand |
+|---|---|---|
+| `gimbal_binnenring.stl` | Binnenring – klemt de beker, draaipunten op de X-as | rechtop |
+| `gimbal_middenring.stl` | Middenring – gimbalring, draaipunten op beide assen | rechtop |
+| `gimbal_handvat_beugel.stl` | Beugel – houdt de gimbalring vast | **plat op de bed** |
+| `gimbal_handvat_greep.stl` | Greep – ergonomisch, met platte bodem | **rechtop** |
+
+> Liever in één keer? `gimbal_handvat_1geheel.stl` is hetzelfde handvat als één
+> stuk, maar dat heeft wél support nodig. De gesplitste versie print het fijnst.
+
+### Printinstellingen (V4)
+
+| Onderdeel | Support | Tip |
+|---|---|---|
+| Binnenring / middenring | licht, voor de oogjes | brim aanraden |
+| **Beugel** | **geen** | ligt plat, perfecte hechting |
+| **Greep** | **geen** | staat op de platte bodem; brim voor de zekerheid |
 
 ### Stuklijst (V4)
 
 | Onderdeel | Aantal | Via |
 |---|---|---|
-| Binnenring, middenring, handvat (PLA) | elk 1× | 3D-printer |
+| Binnenring, middenring, beugel, greep (PLA) | elk 1× | 3D-printer |
 | Bout M4 × 16 mm | 4× | Bouwmarkt |
 | Zelfborgende moer M4 *of* M4 in PLA tappen | 4× | Bouwmarkt |
 | Sluitring M4 | 4× | Bouwmarkt |
 | Siliconen binnenrand | 1× | Bouwmarkt |
+| Contactlijm (greep ↔ beugel) | 1× | Bouwmarkt |
 
 ### Montage (V4)
 
-1. **Siliconen rand** in de binnenring lijmen (contactlijm).
-2. **Binnenring in de middenring** leggen; de twee oogjes (X-as) uitlijnen met de
+1. **Greep aan de beugel:** het pennetje van de greep in het gat van de beugel
+   steken en vastlijmen met **contactlijm** (eventueel een schroefje van onderaf
+   door de beugel in de greep voor extra sterkte).
+2. **Siliconen rand** in de binnenring lijmen.
+3. **Binnenring in de middenring** leggen; de twee oogjes (X-as) uitlijnen met de
    gaten in de middenring. Aan elke kant een **M4-bout** indraaien – net zo strak
    dat de binnenring **soepel kantelt**.
-3. **Middenring in de beugel van het handvat** plaatsen; de trunnions (Y-as)
-   uitlijnen met de gaten in de beugel en met **M4-bouten** vastzetten – ook hier
-   soepel laten draaien.
-4. **Beker** van bovenaf in de binnenring schuiven; de siliconen rand grijpt hem
+4. **Middenring in de beugel** plaatsen; de trunnions (Y-as) uitlijnen met de
+   gaten in de beugel en met **M4-bouten** vastzetten – ook hier soepel laten
+   draaien.
+5. **Beker** van bovenaf in de binnenring schuiven; de siliconen rand grijpt hem
    vast.
 
-> ⚙️ De truc zit in stap 2 en 3: de bouten mogen **niet vastgeklemd** worden. De
+> ⚙️ De truc zit in stap 3 en 4: de bouten mogen **niet vastgeklemd** worden. De
 > ringen moeten vrij kunnen draaien, anders werkt de gimbal niet.
 
 ### V4 aanpassen
