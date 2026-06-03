@@ -2,11 +2,18 @@
 
 **NLT – Technisch Ontwerpen** · Bram, Ruben, Wander & Jelle · Spinoza20First – HAVO 4
 
-Dit is het **visuele/fysieke product** bij ons ontwerpverslag: het definitieve
-ontwerp **V3** uitgewerkt als 3D-model. Je kunt de bestanden direct laten
-**3D-printen** of openen in **Tinkercad** om aan te passen.
+Dit is het **visuele/fysieke product** bij ons ontwerpverslag, uitgewerkt als
+3D-model. Je kunt de bestanden direct laten **3D-printen** of openen in
+**Tinkercad** om aan te passen. Er zijn **twee versies**:
 
-![Overzicht](img/overzicht.png)
+| Versie | Beschrijving | Draaipunten |
+|---|---|---|
+| **V3** | Ring in twee helften + vrij draaiend handvat (ons verslagontwerp) | 1 as |
+| **V4 – Gimbal** ⭐ | Upgrade: échte gimbal, blijft in **alle** richtingen waterpas + ergonomisch handvat | 2 assen |
+
+![Overzicht V3](img/overzicht.png)
+
+> 🆕 De **gimbal-upgrade (V4)** staat verderop in [hoofdstuk 9](#9-upgrade-versie-v4--echte-gimbal).
 
 ---
 
@@ -33,14 +40,20 @@ draaien ten opzichte van de ring.
 
 ```
 bekerhouder-parkinson/
-├── src/bekerhouder.scad      ← het bronontwerp (parametrisch, OpenSCAD)
-├── stl/                      ← printklare / Tinkercad-bestanden
-│   ├── ring_helft_A.stl      ← Ring helft A (met vork voor het handvat)
-│   ├── ring_helft_B.stl      ← Ring helft B (vlak)
-│   ├── handvat.stl           ← Handvat
-│   └── printplaat_compleet.stl  ← alle 3 de delen in één bestand
-├── img/                      ← afbeeldingen voor het verslag
-└── render.sh                 ← script dat alle plaatjes + STL's opnieuw maakt
+├── src/
+│   ├── bekerhouder.scad          ← V3 bronontwerp (parametrisch, OpenSCAD)
+│   └── bekerhouder_gimbal.scad   ← V4 gimbal bronontwerp
+├── stl/                          ← printklare / Tinkercad-bestanden
+│   ├── ring_helft_A.stl          ← V3: Ring helft A (met vork)
+│   ├── ring_helft_B.stl          ← V3: Ring helft B (vlak)
+│   ├── handvat.stl               ← V3: Handvat
+│   ├── gimbal_binnenring.stl     ← V4: Binnenring (bekerklem)
+│   ├── gimbal_middenring.stl     ← V4: Middenring (gimbalring)
+│   ├── gimbal_handvat.stl        ← V4: Ergonomisch handvat
+│   └── *_printplaat_compleet.stl ← alle delen in één bestand (per versie)
+├── img/                          ← afbeeldingen voor het verslag
+├── render.sh                     ← genereert V3 plaatjes + STL's
+└── render_gimbal.sh              ← genereert V4 plaatjes + STL's
 ```
 
 De **3 printdelen** komen precies overeen met onze stuklijst:
@@ -153,3 +166,77 @@ Of open `src/bekerhouder.scad` in OpenSCAD en exporteer met **File → Export �
 | 8. Veiligheid | Geen scherpe randen, alles afgerond |
 | 9. Betaalbaar | Weinig PLA + 1 boutje, makkelijk te reproduceren |
 | 10. Uiterlijk | Strakke ring + handvat, valt niet op als "hulpmiddel" |
+
+---
+
+## 9. Upgrade: versie V4 – echte gimbal
+
+In V3 dempt het handvat de trilling om **één** as. Met een **gimbal** lossen we
+dat in **alle** richtingen op – hetzelfde principe als een scheepskompas dat
+altijd waterpas blijft. Daarnaast heeft V4 een **ergonomisch handvat** met
+vingergroeven en duimsteun.
+
+![Overzicht V4 gimbal](img/g_overzicht.png)
+
+### Hoe werkt de gimbal?
+
+Twee ringen met **twee loodrechte draaiassen**:
+
+- De **binnenring** klemt de beker en draait om de **X-as** t.o.v. de middenring.
+- De **middenring** draait om de **Y-as** t.o.v. het handvat.
+
+Omdat de twee assen loodrecht op elkaar staan en de beker eronder hangt, blijft
+de beker **waterpas, hoe je het handvat ook kantelt**. Tremoren in elke richting
+worden zo opgevangen.
+
+| Aanzicht | Beeld |
+|---|---|
+| Op een beker | ![g_assemblage](img/g_assemblage.png) |
+| Product los | ![g_product](img/g_product.png) |
+| Explosietekening | ![g_exploded](img/g_explosietekening.png) |
+
+### Printdelen (V4)
+
+| STL | Onderdeel |
+|---|---|
+| `gimbal_binnenring.stl` | Binnenring – klemt de beker, draaipunten op de X-as |
+| `gimbal_middenring.stl` | Middenring – de gimbalring, draaipunten op beide assen |
+| `gimbal_handvat.stl` | Ergonomisch handvat met beugel |
+
+### Stuklijst (V4)
+
+| Onderdeel | Aantal | Via |
+|---|---|---|
+| Binnenring, middenring, handvat (PLA) | elk 1× | 3D-printer |
+| Bout M4 × 16 mm | 4× | Bouwmarkt |
+| Zelfborgende moer M4 *of* M4 in PLA tappen | 4× | Bouwmarkt |
+| Sluitring M4 | 4× | Bouwmarkt |
+| Siliconen binnenrand | 1× | Bouwmarkt |
+
+### Montage (V4)
+
+1. **Siliconen rand** in de binnenring lijmen (contactlijm).
+2. **Binnenring in de middenring** leggen; de twee oogjes (X-as) uitlijnen met de
+   gaten in de middenring. Aan elke kant een **M4-bout** indraaien – net zo strak
+   dat de binnenring **soepel kantelt**.
+3. **Middenring in de beugel van het handvat** plaatsen; de trunnions (Y-as)
+   uitlijnen met de gaten in de beugel en met **M4-bouten** vastzetten – ook hier
+   soepel laten draaien.
+4. **Beker** van bovenaf in de binnenring schuiven; de siliconen rand grijpt hem
+   vast.
+
+> ⚙️ De truc zit in stap 2 en 3: de bouten mogen **niet vastgeklemd** worden. De
+> ringen moeten vrij kunnen draaien, anders werkt de gimbal niet.
+
+### V4 aanpassen
+
+Net als V3 is `src/bekerhouder_gimbal.scad` parametrisch (zet je eigen `cup_d`).
+Opnieuw genereren met `./render_gimbal.sh`.
+
+---
+
+> 💡 **Tip voor het verslag (H7 & H8):** beschrijf in *“Verslag prototype”* welke
+> versie je print en waarom, en gebruik *“Evaluatie/reflectie”* om V3 en V4 te
+> vergelijken (1 as vs. 2 assen, simpel vs. beter dempend). Het bijstellen van de
+> klik-/draaipassing na een testprint is precies het soort reflectie dat daar
+> goed past.
