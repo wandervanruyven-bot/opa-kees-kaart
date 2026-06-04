@@ -50,7 +50,7 @@ bekerhouder-parkinson/
 │   ├── gimbal_binnenring.stl     ← V4: Binnenring (bekerklem)
 │   ├── gimbal_middenring.stl     ← V4: Middenring (gimbalring)
 │   ├── gimbal_handvat_beugel.stl ← V4: Beugel (printt plat)
-│   ├── gimbal_handvat_greep.stl  ← V4: Lusgreep (hand past erdoor)
+│   ├── gimbal_handvat_greep.stl  ← V4: Lusgreep (grijpbalk + veiligheidslus)
 │   ├── gimbal_handvat_1geheel.stl← V4: handvat als 1 geheel (alternatief)
 │   └── *_printplaat_compleet.stl ← alle delen in één bestand (per versie)
 ├── img/                          ← afbeeldingen voor het verslag
@@ -175,10 +175,13 @@ Of open `src/bekerhouder.scad` in OpenSCAD en exporteer met **File → Export �
 
 In V3 dempt het handvat de trilling om **één** as. Met een **gimbal** lossen we
 dat in **alle** richtingen op – hetzelfde principe als een scheepskompas dat
-altijd waterpas blijft. Daarnaast heeft V4 een **lushandvat**: een gesloten lus
-waar je je **hele hand doorheen steekt**. Dat is fijn voor mensen met Parkinson,
-want ook met een zwakke of trillende grip blijft het handvat om je hand hangen –
-je hoeft niet stevig te knijpen.
+altijd waterpas blijft. Daarnaast heeft V4 een **ergonomisch lushandvat**:
+- een **dikke, gevormde grijpbalk** (~32 mm) met **vingergroeven** en een
+  **duimsteun**, zodat je hand er stevig en comfortabel omheen vouwt;
+- met een **gesloten veiligheidslus** eromheen waar je hand doorheen gaat.
+
+Zo heb je het goed vast én blijft het om je hand hangen, ook met een zwakke of
+trillende grip — je hoeft niet hard te knijpen. Ideaal voor mensen met Parkinson.
 
 ![Overzicht V4 gimbal](img/g_overzicht.png)
 
@@ -211,7 +214,7 @@ support print**:
 | `gimbal_binnenring.stl` | Binnenring – klemt de beker, draaipunten op de X-as | rechtop |
 | `gimbal_middenring.stl` | Middenring – gimbalring, draaipunten op beide assen | rechtop |
 | `gimbal_handvat_beugel.stl` | Beugel – houdt de gimbalring vast | **plat op de bed** |
-| `gimbal_handvat_greep.stl` | Lusgreep – gesloten lus, hand past erdoor | **plat op de bed** |
+| `gimbal_handvat_greep.stl` | Lusgreep – dikke grijpbalk + veiligheidslus | **plat op de bed** |
 
 > Liever in één keer? `gimbal_handvat_1geheel.stl` is hetzelfde handvat als één
 > stuk, maar dat heeft wél support nodig. De gesplitste versie print het fijnst.

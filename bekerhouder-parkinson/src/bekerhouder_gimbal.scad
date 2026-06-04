@@ -56,13 +56,14 @@ peg_d2     = 8;                   // verbindingspen greep -> beugel
 peg_len2   = 10;
 peg_hole2  = 8.5;
 
-// lusgreep: een gesloten lus waar de hand doorheen past
-loop_x     = 92;                  // vlak van de lus (X), ruim buiten beker/ringen
-loop_yh    = 50;                  // halve breedte van de lus (Y)
-loop_zt    = -22;                 // bovenkant lus (Z)
-loop_zb    = -148;                // onderkant lus (Z)
-loop_r     = 12;                  // straal van de buis in het YZ-vlak (24 mm grip)
-loop_t     = 22;                  // dikte van de lus in X (vlakke kant -> printbaar)
+// lusgreep: dikke ergonomische grijpbalk + dunnere veiligheidslus
+loop_x      = 90;                 // vlak van de lus (X), ruim buiten beker/ringen
+loop_yh     = 48;                 // halve breedte van de lus (Y)
+loop_zt     = -30;                // hoogte van de dikke grijpbalk (Z)
+loop_zb     = -150;               // onderkant lus (Z)
+loop_r      = 9;                  // dunne veiligheidslus (18 mm)
+grip_bar_r  = 16;                 // dikke ergonomische grijpbalk (32 mm)
+loop_t      = 20;                 // dikte in X (vlakke kant -> printbaar)
 
 // =====================================================================
 //  HULPMODULES
@@ -164,11 +165,11 @@ module beugel() {
 //  De lus is rond om te grijpen, maar plat in de X-richting, zodat
 //  hij plat op de bed kan printen (zie 'plate' voor de printstand).
 
-// één balk van de lus tussen punt p1 en p2 (rond in YZ, vlak in X)
-module loop_bar(p1, p2) {
+// één balk van de lus tussen p1 en p2 met straal r (rond in YZ, vlak in X)
+module loop_bar(p1, p2, r) {
     hull() {
-        translate(p1) rotate([0,90,0]) cylinder(h=loop_t, r=loop_r, center=true);
-        translate(p2) rotate([0,90,0]) cylinder(h=loop_t, r=loop_r, center=true);
+        translate(p1) rotate([0,90,0]) cylinder(h=loop_t, r=r, center=true);
+        translate(p2) rotate([0,90,0]) cylinder(h=loop_t, r=r, center=true);
     }
 }
 
@@ -178,20 +179,34 @@ module grip(solo=true) {
     c2 = [loop_x, -loop_yh, loop_zt];
     c3 = [loop_x, -loop_yh, loop_zb];
     c4 = [loop_x,  loop_yh, loop_zb];
-    union() {
-        // de gesloten lus
-        loop_bar(c1, c2);    // bovenbalk (grijpbalk)
-        loop_bar(c2, c3);    // zijbalk
-        loop_bar(c3, c4);    // onderbalk
-        loop_bar(c4, c1);    // zijbalk
-        // hals van de lus naar de beugel
-        hull() {
-            translate([loop_x, 0, loop_zt]) rotate([0,90,0])
-                cylinder(h=loop_t, r=loop_r, center=true);
-            translate([grip_x, 0, -h_y/2 + 1]) cylinder(d=20, h=2, center=true);
+    difference() {
+        union() {
+            // dikke ergonomische grijpbalk (bovenbalk), licht getailleerd
+            hull() {
+                translate(c1) rotate([0,90,0]) cylinder(h=loop_t, r=grip_bar_r-2, center=true);
+                translate(c2) rotate([0,90,0]) cylinder(h=loop_t, r=grip_bar_r-2, center=true);
+                translate([loop_x,0,loop_zt]) rotate([0,90,0]) cylinder(h=loop_t, r=grip_bar_r, center=true);
+            }
+            // dunnere veiligheidslus
+            loop_bar(c2, c3, loop_r);
+            loop_bar(c3, c4, loop_r);
+            loop_bar(c4, c1, loop_r);
+            // hals van de grijpbalk naar de beugel
+            hull() {
+                translate([loop_x, 0, loop_zt]) rotate([0,90,0])
+                    cylinder(h=loop_t, r=grip_bar_r-3, center=true);
+                translate([grip_x, 0, -h_y/2 + 1]) cylinder(d=20, h=2, center=true);
+            }
+            // pennetje in de beugel
+            translate([grip_x, 0, -h_y/2 - 0.1]) cylinder(d=peg_d2, h=peg_len2);
         }
-        // pennetje in de beugel
-        translate([grip_x, 0, -h_y/2 - 0.1]) cylinder(d=peg_d2, h=peg_len2);
+        // vingergroeven op de grijpbalk (onderkant), gespreid langs Y
+        for (yy = [-31, -10.5, 10.5, 31])
+            translate([loop_x, yy, loop_zt - grip_bar_r + 1])
+                rotate([0,90,0]) cylinder(h=loop_t+2, r=4.5, center=true);
+        // ondiepe duimsteun bovenop de grijpbalk
+        translate([loop_x, 0, loop_zt + grip_bar_r + 1])
+            scale([1.6,1,1]) sphere(8);
     }
 }
 
@@ -199,8 +214,8 @@ module grip(solo=true) {
 //  ~ realistische handpalm: 78 mm breed, 100 mm lang, 32 mm dik
 module hand_ref() {
     color([0.95,0.8,0.7,0.6])
-        translate([loop_x - 4, 0, (loop_zt+loop_zb)/2])
-            scale([16, 39, 50]) sphere(1);
+        translate([loop_x - 4, 0, loop_zt - 42])
+            scale([16, 39, 46]) sphere(1);
 }
 
 // ---- Handvat als één geheel (alleen voor de weergaven) ----------
