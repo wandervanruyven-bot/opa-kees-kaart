@@ -231,34 +231,52 @@ support print**:
 | **Beugel** | **geen** | ligt plat, perfecte hechting |
 | **Lusgreep** | **geen** | de lus ligt plat op de bed (vlakke kant onder) |
 
+### Bevestiging — hoe zit alles vast?
+
+![Bevestiging](img/g_bevestiging.png)
+
+Alle verbindingen zijn **boutverbindingen met een vastgeklemde moer**, dus géén
+schroefdraad in kwetsbaar plastic. Er zijn drie soorten:
+
+| # | Verbinding | Hoe het vastzit |
+|---|---|---|
+| 1 | **Binnenring ↔ middenring** (X-as) | M4-bout van buiten door de middenring, in een **moer die vastzit in een sleuf** in het oogje van de binnenring |
+| 1 | **Middenring ↔ beugel** (Y-as) | idem: M4-bout door de beugel, in een **vastgeklemde moer** in de trunnion van de middenring |
+| 2 | **Greep ↔ beugel** | dikke **pen** in de beugel + een **M3 dwarsbout** dwars erdoorheen |
+
+**Waarom een vastgeklemde moer (nut trap)?** De moer valt van bovenaf in een
+sleuf en kan niet meedraaien. De bout grijpt zo in **metaal** in plaats van in
+PLA → veel sterker, en je kunt hem opnieuw aandraaien zonder dat de schroefdraad
+uitslijt. Voor de twee draaipunten draai je net zó vast dat de ring **soepel
+kan kantelen, maar zonder speling** (die lichte wrijving dempt de trilling juist).
+
 ### Stuklijst (V4)
 
 | Onderdeel | Aantal | Via |
 |---|---|---|
 | Binnenring, middenring, beugel, greep (PLA) | elk 1× | 3D-printer |
 | Bout M4 × 16 mm | 4× | Bouwmarkt |
-| Zelfborgende moer M4 *of* M4 in PLA tappen | 4× | Bouwmarkt |
-| Sluitring M4 | 4× | Bouwmarkt |
+| **Zelfborgende moer M4** (nylon) | 4× | Bouwmarkt |
+| Bout M3 × 20 mm + zelfborgende moer M3 | 1× | Bouwmarkt |
 | Siliconen binnenrand | 1× | Bouwmarkt |
-| Contactlijm (greep ↔ beugel) | 1× | Bouwmarkt |
+| Contactlijm (siliconen + evt. extra op de pen) | 1× | Bouwmarkt |
 
-### Montage (V4)
+### Montage (V4) — stap voor stap
 
-1. **Greep aan de beugel:** het pennetje van de greep in het gat van de beugel
-   steken en vastlijmen met **contactlijm** (eventueel een schroefje van onderaf
-   door de beugel in de greep voor extra sterkte).
+1. **Moeren plaatsen:** druk in elk van de 4 oogjes/trunnions van bovenaf een
+   **M4-moer** in de sleuf (de sleuf houdt hem vast).
 2. **Siliconen rand** in de binnenring lijmen.
-3. **Binnenring in de middenring** leggen; de twee oogjes (X-as) uitlijnen met de
-   gaten in de middenring. Aan elke kant een **M4-bout** indraaien – net zo strak
-   dat de binnenring **soepel kantelt**.
-4. **Middenring in de beugel** plaatsen; de trunnions (Y-as) uitlijnen met de
-   gaten in de beugel en met **M4-bouten** vastzetten – ook hier soepel laten
-   draaien.
-5. **Beker** van bovenaf in de binnenring schuiven; de siliconen rand grijpt hem
-   vast.
+3. **Binnenring in de middenring** leggen; de oogjes (X-as) op de gaten van de
+   middenring uitlijnen. Aan beide kanten een **M4-bout** van buiten indraaien tot
+   de binnenring **soepel kantelt, zonder speling**.
+4. **Middenring in de beugel** plaatsen; de trunnions (Y-as) op de gaten van de
+   beugel uitlijnen en met **M4-bouten** vastzetten – ook hier soepel laten draaien.
+5. **Greep aan de beugel:** de dikke pen in de beugel steken en de **M3 dwarsbout**
+   er dwars doorheen + moer aandraaien (dit draagt het gewicht; lijm is optioneel).
+6. **Beker** van bovenaf in de binnenring schuiven; de siliconen rand grijpt hem.
 
-> ⚙️ De truc zit in stap 3 en 4: de bouten mogen **niet vastgeklemd** worden. De
-> ringen moeten vrij kunnen draaien, anders werkt de gimbal niet.
+> ⚙️ Let op stap 3 en 4: de draaipunt-bouten mogen **niet muurvast** – de ringen
+> moeten vrij kantelen, anders werkt de gimbal niet.
 
 ### V4 aanpassen
 
