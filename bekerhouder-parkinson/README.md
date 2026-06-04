@@ -9,7 +9,7 @@ Dit is het **visuele/fysieke product** bij ons ontwerpverslag, uitgewerkt als
 | Versie | Beschrijving | Draaipunten |
 |---|---|---|
 | **V3** | Ring in twee helften + vrij draaiend handvat (ons verslagontwerp) | 1 as |
-| **V4 – Gimbal** ⭐ | Upgrade: échte gimbal, blijft in **alle** richtingen waterpas + ergonomisch handvat | 2 assen |
+| **V4 – Gimbal** ⭐ | Upgrade: échte gimbal, blijft in **alle** richtingen waterpas + **lushandvat** (hand past erdoor) | 2 assen |
 
 ![Overzicht V3](img/overzicht.png)
 
@@ -50,7 +50,7 @@ bekerhouder-parkinson/
 │   ├── gimbal_binnenring.stl     ← V4: Binnenring (bekerklem)
 │   ├── gimbal_middenring.stl     ← V4: Middenring (gimbalring)
 │   ├── gimbal_handvat_beugel.stl ← V4: Beugel (printt plat)
-│   ├── gimbal_handvat_greep.stl  ← V4: Greep (printt rechtop)
+│   ├── gimbal_handvat_greep.stl  ← V4: Lusgreep (hand past erdoor)
 │   ├── gimbal_handvat_1geheel.stl← V4: handvat als 1 geheel (alternatief)
 │   └── *_printplaat_compleet.stl ← alle delen in één bestand (per versie)
 ├── img/                          ← afbeeldingen voor het verslag
@@ -175,10 +175,14 @@ Of open `src/bekerhouder.scad` in OpenSCAD en exporteer met **File → Export �
 
 In V3 dempt het handvat de trilling om **één** as. Met een **gimbal** lossen we
 dat in **alle** richtingen op – hetzelfde principe als een scheepskompas dat
-altijd waterpas blijft. Daarnaast heeft V4 een **ergonomisch handvat** met
-vingergroeven en duimsteun.
+altijd waterpas blijft. Daarnaast heeft V4 een **lushandvat**: een gesloten lus
+waar je je **hele hand doorheen steekt**. Dat is fijn voor mensen met Parkinson,
+want ook met een zwakke of trillende grip blijft het handvat om je hand hangen –
+je hoeft niet stevig te knijpen.
 
 ![Overzicht V4 gimbal](img/g_overzicht.png)
+
+![Hand past door de lus](img/g_hand.png)
 
 ### Hoe werkt de gimbal?
 
@@ -207,7 +211,7 @@ support print**:
 | `gimbal_binnenring.stl` | Binnenring – klemt de beker, draaipunten op de X-as | rechtop |
 | `gimbal_middenring.stl` | Middenring – gimbalring, draaipunten op beide assen | rechtop |
 | `gimbal_handvat_beugel.stl` | Beugel – houdt de gimbalring vast | **plat op de bed** |
-| `gimbal_handvat_greep.stl` | Greep – ergonomisch, met platte bodem | **rechtop** |
+| `gimbal_handvat_greep.stl` | Lusgreep – gesloten lus, hand past erdoor | **plat op de bed** |
 
 > Liever in één keer? `gimbal_handvat_1geheel.stl` is hetzelfde handvat als één
 > stuk, maar dat heeft wél support nodig. De gesplitste versie print het fijnst.
@@ -218,7 +222,7 @@ support print**:
 |---|---|---|
 | Binnenring / middenring | licht, voor de oogjes | brim aanraden |
 | **Beugel** | **geen** | ligt plat, perfecte hechting |
-| **Greep** | **geen** | staat op de platte bodem; brim voor de zekerheid |
+| **Lusgreep** | **geen** | de lus ligt plat op de bed (vlakke kant onder) |
 
 ### Stuklijst (V4)
 

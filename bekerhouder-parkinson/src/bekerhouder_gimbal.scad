@@ -50,14 +50,19 @@ lug_h   = 13;                     // hoogte van de oogjes
 in_tip  = ir_o - 1;               // 53.5  tip binnenring-oog (as = X)
 out_tip = r_yoke - 1.5;           // 64.5  tip middenring-trunnion (as = Y)
 
-/* ---------------- ERGONOMISCH HANDVAT (recht, splitsbaar) ------ */
-grip_r     = 14;                  // greepstraal (~28 mm dik)
-grip_x     = 76;                  // greep recht omlaag, vrij van de middenring
-grip_top_z = -7;                  // sluit aan op de onderkant van de beugel
-grip_bot_z = -100;
+/* ---------------- HANDVAT: BEUGEL + LUSGREEP ------------------- */
+grip_x     = 76;                  // verbindingspunt greep <-> beugel
 peg_d2     = 8;                   // verbindingspen greep -> beugel
 peg_len2   = 10;
 peg_hole2  = 8.5;
+
+// lusgreep: een gesloten lus waar de hand doorheen past
+loop_x     = 92;                  // vlak van de lus (X), ruim buiten beker/ringen
+loop_yh    = 50;                  // halve breedte van de lus (Y)
+loop_zt    = -22;                 // bovenkant lus (Z)
+loop_zb    = -148;                // onderkant lus (Z)
+loop_r     = 12;                  // straal van de buis in het YZ-vlak (24 mm grip)
+loop_t     = 22;                  // dikte van de lus in X (vlakke kant -> printbaar)
 
 // =====================================================================
 //  HULPMODULES
@@ -155,29 +160,47 @@ module beugel() {
     }
 }
 
-// ---- Handvat: GREEP (rechte capsule, staat rechtop tijdens printen) ----
-//  solo=true  -> losse greep met vlakke bodem (printen)
-//  solo=false -> vast aan de beugel voor de weergaven
-module grip(solo=true) {
-    difference() {
-        union() {
-            hull() {
-                translate([grip_x, 0, grip_top_z-1])  cylinder(d=2*grip_r-6, h=2, center=true);
-                translate([grip_x, 0, grip_top_z-16]) sphere(grip_r);
-                translate([grip_x, 0, grip_bot_z+8])  sphere(grip_r);
-            }
-            // pennetje bovenop (steekt in de beugel)
-            translate([grip_x, 0, grip_top_z-0.1]) cylinder(d=peg_d2, h=peg_len2);
-        }
-        // vlakke bodem: greep staat stabiel rechtop op de printplaat
-        if (solo)
-            translate([0, 0, grip_bot_z-300]) cube([600,600,600], center=true);
-        // vingergroeven aan de buitenzijde
-        for (z = [grip_top_z-30, grip_top_z-48, grip_top_z-66, grip_top_z-84])
-            translate([grip_x + grip_r + 1.5, 0, z]) sphere(6.5);
-        // duimsteun aan de bekerzijde
-        translate([grip_x - grip_r - 0.5, 0, grip_top_z-20]) scale([1,1,1.5]) sphere(8.5);
+// ---- Handvat: LUSGREEP (de hand past door de lus) --------------
+//  De lus is rond om te grijpen, maar plat in de X-richting, zodat
+//  hij plat op de bed kan printen (zie 'plate' voor de printstand).
+
+// één balk van de lus tussen punt p1 en p2 (rond in YZ, vlak in X)
+module loop_bar(p1, p2) {
+    hull() {
+        translate(p1) rotate([0,90,0]) cylinder(h=loop_t, r=loop_r, center=true);
+        translate(p2) rotate([0,90,0]) cylinder(h=loop_t, r=loop_r, center=true);
     }
+}
+
+module grip(solo=true) {
+    // vier hoeken van de lus
+    c1 = [loop_x,  loop_yh, loop_zt];
+    c2 = [loop_x, -loop_yh, loop_zt];
+    c3 = [loop_x, -loop_yh, loop_zb];
+    c4 = [loop_x,  loop_yh, loop_zb];
+    union() {
+        // de gesloten lus
+        loop_bar(c1, c2);    // bovenbalk (grijpbalk)
+        loop_bar(c2, c3);    // zijbalk
+        loop_bar(c3, c4);    // onderbalk
+        loop_bar(c4, c1);    // zijbalk
+        // hals van de lus naar de beugel
+        hull() {
+            translate([loop_x, 0, loop_zt]) rotate([0,90,0])
+                cylinder(h=loop_t, r=loop_r, center=true);
+            translate([grip_x, 0, -h_y/2 + 1]) cylinder(d=20, h=2, center=true);
+        }
+        // pennetje in de beugel
+        translate([grip_x, 0, -h_y/2 - 0.1]) cylinder(d=peg_d2, h=peg_len2);
+    }
+}
+
+// ---- Hand als grootte-referentie (alleen weergave) -------------
+//  ~ realistische handpalm: 78 mm breed, 100 mm lang, 32 mm dik
+module hand_ref() {
+    color([0.95,0.8,0.7,0.6])
+        translate([loop_x - 4, 0, (loop_zt+loop_zb)/2])
+            scale([16, 39, 50]) sphere(1);
 }
 
 // ---- Handvat als één geheel (alleen voor de weergaven) ----------
@@ -232,21 +255,26 @@ if (part == "inner")      inner_ring();
 else if (part == "outer") outer_ring();
 else if (part == "handle") handle();
 else if (part == "beugel") beugel();
-else if (part == "grip")   grip();
+else if (part == "grip")   translate([0,0,103]) rotate([0,90,0]) grip();   // printstand: lus plat
 else if (part == "plate") {
-    // alles in printstand: ringen rechtop, beugel plat, greep rechtop
-    translate([-105, -60, h_i/2]) inner_ring();
-    translate([-105,  60, h_o/2]) outer_ring();
-    translate([  70,  55, h_y/2]) beugel();
-    translate([  55, -60, -grip_bot_z]) grip();
+    // alles in printstand: ringen rechtop, beugel plat, lusgreep plat
+    translate([-120, -55, h_i/2]) inner_ring();
+    translate([-120,  55, h_o/2]) outer_ring();
+    translate([ -25,  60, h_y/2]) beugel();
+    translate([  70, -65, 103]) rotate([0,90,0]) grip();
 }
 else if (part == "product") product();
 else if (part == "exploded") {
     color("#2e7d32") translate([0,0,-34]) inner_ring();
     color([0.9,0.4,0.2]) translate([0,0,-34]) liner();
     color("#fb8c00") outer_ring();
-    color("#1565c0") translate([48,0,0]) handle();
+    color("#1565c0") translate([60,0,0]) handle();
     %translate([0,0,78]) ghost_cup();
+}
+else if (part == "assembly_hand") {
+    translate([0,0,-66]) ghost_cup();
+    product();
+    hand_ref();
 }
 else {   // assembly
     translate([0,0,-66]) ghost_cup();
