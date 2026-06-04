@@ -56,14 +56,36 @@ peg_d2     = 8;                   // verbindingspen greep -> beugel
 peg_len2   = 10;
 peg_hole2  = 8.5;
 
-// lusgreep: dikke ergonomische grijpbalk + dunnere veiligheidslus
-loop_x      = 90;                 // vlak van de lus (X), ruim buiten beker/ringen
-loop_yh     = 48;                 // halve breedte van de lus (Y)
-loop_zt     = -30;                // hoogte van de dikke grijpbalk (Z)
-loop_zb     = -150;               // onderkant lus (Z)
-loop_r      = 9;                  // dunne veiligheidslus (18 mm)
-grip_bar_r  = 16;                 // dikke ergonomische grijpbalk (32 mm)
-loop_t      = 20;                 // dikte in X (vlakke kant -> printbaar)
+// ergonomisch handvat: een vloeiend gebogen greep (mok-stijl) waar de
+// hand / 4 vingers doorheen gaan, met een dikkere gevormde grijpzijde.
+loop_t      = 20;                 // dikte in Y (vlakke kant -> printbaar)
+// middellijn van het handvat in het XZ-vlak: [x, z, straal]
+handle_path = [
+    [ 73,   -6,  9],   // 0  hals (bij de beugel)
+    [ 92,  -15, 10],   // 1
+    [103,  -34, 12],   // 2  grijpzijde (dik)
+    [106,  -60, 13],   // 3
+    [106,  -88, 13],   // 4
+    [100, -110, 12],   // 5
+    [ 84, -124, 10],   // 6
+    [ 64, -126,  9],   // 7  onderkant
+    [ 52, -112,  8],   // 8
+    [ 50,  -84,  8],   // 9  binnenzijde (bekerkant, dun = "guard")
+    [ 52,  -56,  8],   // 10
+    [ 62,  -32,  8],   // 11
+];
+
+// vloeiende kromme door de punten (Catmull-Rom), gesloten lus
+function cr(a,b,c,d,t) =
+    0.5*( 2*b + (c-a)*t + (2*a-5*b+4*c-d)*t*t + (3*b-3*c+d-a)*t*t*t );
+N_h = len(handle_path);
+sub_h = 6;
+smooth_path = [ for (i=[0:N_h-1], j=[0:sub_h-1])
+    let( p0=handle_path[(i-1+N_h)%N_h], p1=handle_path[i],
+         p2=handle_path[(i+1)%N_h],     p3=handle_path[(i+2)%N_h], t=j/sub_h )
+    [ cr(p0[0],p1[0],p2[0],p3[0],t),
+      cr(p0[1],p1[1],p2[1],p3[1],t),
+      max(6, cr(p0[2],p1[2],p2[2],p3[2],t)) ] ];
 
 // =====================================================================
 //  HULPMODULES
@@ -165,57 +187,38 @@ module beugel() {
 //  De lus is rond om te grijpen, maar plat in de X-richting, zodat
 //  hij plat op de bed kan printen (zie 'plate' voor de printstand).
 
-// één balk van de lus tussen p1 en p2 met straal r (rond in YZ, vlak in X)
-module loop_bar(p1, p2, r) {
-    hull() {
-        translate(p1) rotate([0,90,0]) cylinder(h=loop_t, r=r, center=true);
-        translate(p2) rotate([0,90,0]) cylinder(h=loop_t, r=r, center=true);
-    }
+// één "puck" (cilinder met as langs Y) op pad-punt p = [x, z, r]
+module puck(p) {
+    translate([p[0], 0, p[1]]) rotate([90,0,0])
+        cylinder(h = loop_t, r = p[2], center = true);
 }
 
 module grip(solo=true) {
-    // vier hoeken van de lus
-    c1 = [loop_x,  loop_yh, loop_zt];
-    c2 = [loop_x, -loop_yh, loop_zt];
-    c3 = [loop_x, -loop_yh, loop_zb];
-    c4 = [loop_x,  loop_yh, loop_zb];
+    n = len(smooth_path);
     difference() {
         union() {
-            // dikke ergonomische grijpbalk (bovenbalk), licht getailleerd
+            // vloeiende lus: hull tussen opeenvolgende (geinterpoleerde) punten
+            for (i = [0:n-1])
+                hull() { puck(smooth_path[i]); puck(smooth_path[(i+1)%n]); }
+            // hals van het handvat naar de beugel
             hull() {
-                translate(c1) rotate([0,90,0]) cylinder(h=loop_t, r=grip_bar_r-2, center=true);
-                translate(c2) rotate([0,90,0]) cylinder(h=loop_t, r=grip_bar_r-2, center=true);
-                translate([loop_x,0,loop_zt]) rotate([0,90,0]) cylinder(h=loop_t, r=grip_bar_r, center=true);
-            }
-            // dunnere veiligheidslus
-            loop_bar(c2, c3, loop_r);
-            loop_bar(c3, c4, loop_r);
-            loop_bar(c4, c1, loop_r);
-            // hals van de grijpbalk naar de beugel
-            hull() {
-                translate([loop_x, 0, loop_zt]) rotate([0,90,0])
-                    cylinder(h=loop_t, r=grip_bar_r-3, center=true);
+                puck(handle_path[0]);
                 translate([grip_x, 0, -h_y/2 + 1]) cylinder(d=20, h=2, center=true);
             }
             // pennetje in de beugel
             translate([grip_x, 0, -h_y/2 - 0.1]) cylinder(d=peg_d2, h=peg_len2);
         }
-        // vingergroeven op de grijpbalk (onderkant), gespreid langs Y
-        for (yy = [-31, -10.5, 10.5, 31])
-            translate([loop_x, yy, loop_zt - grip_bar_r + 1])
-                rotate([0,90,0]) cylinder(h=loop_t+2, r=4.5, center=true);
-        // ondiepe duimsteun bovenop de grijpbalk
-        translate([loop_x, 0, loop_zt + grip_bar_r + 1])
-            scale([1.6,1,1]) sphere(8);
+        // zachte vingergroeven op de grijpzijde, gespreid in Z
+        for (z = [-48, -66, -84, -102])
+            translate([94, 0, z]) rotate([90,0,0]) cylinder(h=loop_t+2, r=4, center=true);
     }
 }
 
 // ---- Hand als grootte-referentie (alleen weergave) -------------
 //  ~ realistische handpalm: 78 mm breed, 100 mm lang, 32 mm dik
 module hand_ref() {
-    color([0.95,0.8,0.7,0.6])
-        translate([loop_x - 4, 0, loop_zt - 42])
-            scale([16, 39, 46]) sphere(1);
+    color([0.95,0.8,0.7,0.55])
+        translate([86, 0, -72]) scale([23, 16, 40]) sphere(1);
 }
 
 // ---- Handvat als één geheel (alleen voor de weergaven) ----------
@@ -270,13 +273,13 @@ if (part == "inner")      inner_ring();
 else if (part == "outer") outer_ring();
 else if (part == "handle") handle();
 else if (part == "beugel") beugel();
-else if (part == "grip")   translate([0,0,103]) rotate([0,90,0]) grip();   // printstand: lus plat
+else if (part == "grip")   translate([0,0,10]) rotate([90,0,0]) grip();   // printstand: plat
 else if (part == "plate") {
-    // alles in printstand: ringen rechtop, beugel plat, lusgreep plat
+    // alles in printstand: ringen rechtop, beugel plat, handvat plat
     translate([-120, -55, h_i/2]) inner_ring();
     translate([-120,  55, h_o/2]) outer_ring();
-    translate([ -25,  60, h_y/2]) beugel();
-    translate([  70, -65, 103]) rotate([0,90,0]) grip();
+    translate([ -30,  60, h_y/2]) beugel();
+    translate([  60, -70, 10]) rotate([90,0,0]) grip();
 }
 else if (part == "product") product();
 else if (part == "exploded") {
