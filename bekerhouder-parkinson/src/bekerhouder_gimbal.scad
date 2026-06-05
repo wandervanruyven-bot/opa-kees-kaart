@@ -45,9 +45,9 @@ h_y     = 14;
 pin_d   = 4;
 clr_d   = 4.4;                    // doorloopgat (vrij draaien)
 tap_d   = 3.3;                    // (oud) gat om M4 in te tappen
-lug_h   = 14;                     // hoogte van de oogjes
-nut_af  = 7.4;                    // sleutelwijdte M4-moer + speling
-nut_thk = 5.2;                    // ruimte voor zelfborgende M4-moer
+lug_h   = 18;                     // hoogte van de oogjes (dikker -> sterker)
+nut_af  = 7.4;                    // sleutelwijdte M4-moer (alleen weergave)
+nut_thk = 5.2;                    // dikte M4-moer (alleen weergave)
 
 in_tip  = ir_o - 1;               // 53.5  tip binnenring-oog (as = X)
 out_tip = r_yoke - 1.5;           // 64.5  tip middenring-trunnion (as = Y)
@@ -101,10 +101,10 @@ module ring(ri, ro, h) {
         translate([ri, -h/2]) square([ro - ri, h]);
 }
 
-// Oogje (lug) op hoek 'ang', van straal r0 tot tip. Draaipunt met een
-// doorlopend boutgat (clearance) en een moer-sleuf van bovenaf, zodat de
-// M4-moer vast komt te zitten (niet meedraait) = sterke metalen schroefdraad.
-module lug(ang, r0, tip, nut=true) {
+// Oogje (lug) op hoek 'ang', van straal r0 tot tip.
+// Doorlopend boutgat (clearance d=clr_d). Bevestiging: M4-bout van buiten,
+// M4-zelfborgende moer aan de binnenkant vasthouden met een tang.
+module lug(ang, r0, tip) {
     rotate([0,0,ang])
         difference() {
             hull() {
@@ -113,10 +113,6 @@ module lug(ang, r0, tip, nut=true) {
             }
             // doorlopend boutgat langs de as
             translate([r0-1, 0, 0]) rotate([0,90,0]) cylinder(h=tip-r0+2, d=clr_d);
-            // moer-sleuf: van bovenaf, moer kan niet meedraaien
-            if (nut)
-                translate([r0 + nut_thk/2 + 1.5, 0, lug_h/2])
-                    cube([nut_thk, nut_af, lug_h+1], center=true);
         }
 }
 
